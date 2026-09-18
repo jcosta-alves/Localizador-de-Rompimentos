@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculador Dinâmico de Rompimento - Satélite</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com" />
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        .painel-controle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.3);
+            z-index: 1000;
+            max-width: 320px;
+        }
+        .painel-controle h3 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #28a745;
+            padding-bottom: 5px;
+        }
+        .form-group {
+            margin-bottom: 12px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .btn-calcular {
+            width: 100%;
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-calcular:hover {
+            background: #218838;
+        }
+        .resultado-alerta {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            display: none;
+        }
+        .btn-maps {
+            display: block;
+            background: #4285F4;
+            color: white;
+            padding: 8px 12px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .btn-maps:hover {
+            background: #357ae8;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="painel-controle">
+        <h3>🛰️ OTDR via Satélite</h3>
+        <div class="form-group">
+            <label for="distanciaInput">Distância do Rompimento (metros):</label>
+            <input type="number" id="distanciaInput" placeholder="Ex: 3600" value="3600">
+        </div>
+        <div class="form-group">
+            <label for="margemInput">Margem de Erro (metros):</label>
+            <input type="number" id="margemInput" value="20">
+        </div>
+        <button class="btn-calcular" onclick="processarRompimento()">Calcular Falha</button>
+
+        <div id="resultado" class="resultado-alerta">
+            <strong>🚨 Falha Detectada!</strong>
+            <p id="infoTrecho" style="margin: 5px 0; font-size: 13px;"></p>
+            <p id="infoCoords" style="margin: 5px 0; font-size: 13px; font-family: monospace;"></p>
+            <a id="linkMaps" href="#" target="_blank" class="btn-maps">Abrir no Google Maps</a>
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com"></script>
+    <script>
+        // Histórico estático da rede óptica
+        var historicoRede = [
+            {nome: "POP", lat: -21.767498, lon: -41.323909, dist: 0},
+            {nome: "CEO 1", lat: -21.768364, lon: -41.319208, dist: 563},
+            {nome: "CEO 2", lat: -21.770566, lon: -41.314413, dist: 1304},
+            {nome: "CEO 3", lat: -21.779781, lon: -41.304176, dist: 2625},
+            {nome: "CEO 4", lat: -21.786765, lon: -41.299826, dist: 3506},
+            {nome: "CEO 5", lat: -21.796018, lon: -41.299603, dist: 4830},
+            {nome: "CEO 6", lat: -21.800732, lon: -41.298256, dist: 5200},
+            {nome: "CEO 7", lat: -21.808306, lon: -41.296134, dist: 6790}
+        ];
+
+        // Inicializa o mapa centralizado na rota
+        var map = L.map('map').setView([-21.786765, -41.299826], 13);
+
+        // 1. Camada Principal: Satélite de Alta Resolução da Esri
+        var sateliteLayer = L.tileLayer('https://arcgisonline.com{z}/{y}/{x}', {
+            maxZoom: 19,
+            attribution: 'Tiles © Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+        }).addTo(map);
+
+        // 2. Camada de Sobreposição: Nomes de ruas e rodovias (Híbrido)
+        L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/toner-labels/{z}/{x}/{y}{r}.png', {
+            // Caso o servidor do Stamen esteja instável, usamos o OpenStreetMap Híbrido alternativo abaixo:
+        });
+        
+        // Alternativa robusta para estradas por cima do satélite (CartoDB Positron Only Labels)
+        L.tileLayer('https://{s}://{z}/{x}/{y}{r}.png', {
+            maxZoom: 19,
+            pane: 'markerPane' // Garante que o texto fique acima do mapa, mas abaixo dos nossos cabos/ícones
+        }).addTo(map);
+
+        // Desenha a rota óptica (Linha amarela/neon para destacar muito bem em cima do satélite escuro)
+        var rotaCoords = historicoRede.map(p => [p.lat, p.lon]);
+        L.polyline(rotaCoords, {color: '#00ffff', weight: 5, opacity: 0.9}).addTo(map);
+
+        // Plota as CEOs fixas no mapa
+        historicoRede.forEach(ponto => {
+            L.circleMarker([ponto.lat, ponto.lon], {
+                radius: 6,
+                fillColor: "#ffcc00",
+                color: "#000",
+                weight: 2,
+                fillOpacity: 1
+            }).addTo(map).bindPopup(`<b>${ponto.nome}</b><br>Distância: ${ponto.dist}m`);
+        });
+
+        // Variáveis de controle para limpar marcações anteriores de falhas
+        var camadaCirculoFalha = null;
+        var camadaMarcadorFalha = null;
+
+        function processarRompimento() {
+            var dAlvo = parseFloat(document.getElementById('distanciaInput').value);
+            var margem = parseFloat(document.getElementById('margemInput').value) || 0;
+            
+            if (isNaN(dAlvo) || dAlvo < 0) {
+                alert("Por favor, digite uma metragem válida.");
+                return;
+            }
+
+            if (camadaCirculoFalha) map.removeLayer(camadaCirculoFalha);
+            if (camadaMarcadorFalha) map.removeLayer(camadaMarcadorFalha);
+
+            var pAnterior = historicoRede;
+            var pSeguinte = historicoRede[historicoRede.length - 1];
+            var flagEncontrado = false;
+
+            for (var i = 0; i < historicoRede.length - 1; i++) {
+                if (historicoRede[i].dist <= dAlvo && dAlvo <= historicoRede[i+1].dist) {
+                    pAnterior = historicoRede[i];
+                    pSeguinte = historicoRede[i+1];
+                    flagEncontrado = true;
+                    break;
+                }
+            }
+
+            if (!flagEncontrado && dAlvo > historicoRede[historicoRede.length - 1].dist) {
+                pAnterior = historicoRede[historicoRede.length - 2];
+                pSeguinte = historicoRede[historicoRede.length - 1];
+            }
+
+            var d1 = pAnterior.dist;
+            var d2 = pSeguinte.dist;
+            var t = (d2 === d1) ? 0 : (dAlvo - d1) / (d2 - d1);
+
+            var latFalha = pAnterior.lat + t * (pSeguinte.lat - pAnterior.lat);
+            var lonFalha = pAnterior.lon + t * (pSeguinte.lon - pAnterior.lon);
+
+            var distDaCaixa = Math.round(dAlvo - pAnterior.dist);
+
+            document.getElementById('infoTrecho').innerHTML = `<b>Vão:</b> Entre ${pAnterior.nome} e ${pSeguinte.nome}<br><b>Afastamento da ${pAnterior.nome}:</b> ${distDaCaixa}m`;
+            document.getElementById('infoCoords').innerHTML = `${latFalha.toFixed(6)}, ${lonFalha.toFixed(6)}`;
+            document.getElementById('linkMaps').href = `https://google.com{latFalha.toFixed(6)},${lonFalha.toFixed(6)}`;
+            document.getElementById('resultado').style.display = 'block';
+
+            // Círculo translúcido vermelho de margem de erro
+            camadaCirculoFalha = L.circle([latFalha, lonFalha], {
+                color: '#ff3333',
+                fillColor: '#ff3333',
+                fillOpacity: 0.35,
+                radius: margem
+            }).addTo(map);
+
+            // Alvo central pulsante/forte
+            camadaMarcadorFalha = L.circleMarker([latFalha, lonFalha], {
+                radius: 9,
+                fillColor: "#ff0000",
+                color: "#ffffff",
+                weight: 3,
+                opacity: 1,
+                fillOpacity: 1
+            }).addTo(map);
+
+            camadaMarcadorFalha.bindPopup(`<b>⚠️ RUPTURA OPTICA</b><br>Metragem: ${dAlvo}m<br>Siga ${distDaCaixa}m da ${pAnterior.nome}`).openPopup();
+
+            map.flyTo([latFalha, lonFalha], 17); // Zoom aproximado (17) para ver postes e árvores nitidamente
+        }
+
+        window.onload = function() {
+            processarRompimento();
+        };
+    </script>
+</body>
+</html>
