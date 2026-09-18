@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculador Dinâmico de Rompimento - Satélite</title>
+    <title>Calculador Dinâmico de Rompimento de Fibra</title>
+    
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com" />
+    
     <style>
         body, html {
             margin: 0;
@@ -24,14 +26,14 @@
             background: rgba(255, 255, 255, 0.95);
             padding: 15px;
             border-radius: 8px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.3);
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
             z-index: 1000;
             max-width: 320px;
         }
         .painel-controle h3 {
             margin-top: 0;
             color: #333;
-            border-bottom: 2px solid #28a745;
+            border-bottom: 2px solid #007bff;
             padding-bottom: 5px;
         }
         .form-group {
@@ -52,7 +54,7 @@
         }
         .btn-calcular {
             width: 100%;
-            background: #28a745;
+            background: #007bff;
             color: white;
             border: none;
             padding: 10px;
@@ -61,7 +63,7 @@
             cursor: pointer;
         }
         .btn-calcular:hover {
-            background: #218838;
+            background: #0056b3;
         }
         .resultado-alerta {
             margin-top: 15px;
@@ -91,7 +93,7 @@
 <body>
 
     <div class="painel-controle">
-        <h3>🛰️ OTDR via Satélite</h3>
+        <h3>⚡ Localizador OTDR</h3>
         <div class="form-group">
             <label for="distanciaInput">Distância do Rompimento (metros):</label>
             <input type="number" id="distanciaInput" placeholder="Ex: 3600" value="3600">
@@ -115,7 +117,7 @@
     <!-- Leaflet JS -->
     <script src="https://unpkg.com"></script>
     <script>
-        // Histórico estático da rede óptica
+        // TABELA ATUALIZADA ATÉ A CEO 25 (Dados extraídos da imagem)
         var historicoRede = [
             {nome: "POP", lat: -21.767498, lon: -41.323909, dist: 0},
             {nome: "CEO 1", lat: -21.768364, lon: -41.319208, dist: 563},
@@ -124,45 +126,46 @@
             {nome: "CEO 4", lat: -21.786765, lon: -41.299826, dist: 3506},
             {nome: "CEO 5", lat: -21.796018, lon: -41.299603, dist: 4830},
             {nome: "CEO 6", lat: -21.800732, lon: -41.298256, dist: 5200},
-            {nome: "CEO 7", lat: -21.808306, lon: -41.296134, dist: 6790}
+            {nome: "CEO 7", lat: -21.808306, lon: -41.296134, dist: 6790},
+            {nome: "CEO 8", lat: -21.814318, lon: -41.294389, dist: 7300},
+            {nome: "CEO 9", lat: -21.818735, lon: -41.294476, dist: 8000},
+            {nome: "CEO 10", lat: -21.827977, lon: -41.278078, dist: 9800},
+            {nome: "CEO 11", lat: -21.831563, lon: -41.271063, dist: 11910},
+            {nome: "CEO 12", lat: -21.855369, lon: -41.241984, dist: 16610},
+            {nome: "CEO 13", lat: -21.883558, lon: -41.211603, dist: 21836},
+            {nome: "CEO 14", lat: -21.887737, lon: -41.199668, dist: 23271},
+            {nome: "CEO 15", lat: -21.880663, lon: -41.191602, dist: 24060},
+            {nome: "CEO 16", lat: -21.924544, lon: -41.144648, dist: 31360},
+            {nome: "CEO 17", lat: -21.910138, lon: -41.137872, dist: 33490},
+            {nome: "CEO 18", lat: -21.907053, lon: -41.124307, dist: 36041},
+            {nome: "CEO 19", lat: -21.906017, lon: -41.122693, dist: 36250},
+            {nome: "CEO 20", lat: -21.882133, lon: -41.117229, dist: 39880},
+            {nome: "CEO 21", lat: -21.866638, lon: -41.083234, dist: 42800},
+            {nome: "CEO 22", lat: -21.835863, lon: -41.098580, dist: 47891},
+            {nome: "CEO 23", lat: -21.805718, lon: -41.092651, dist: 54086},
+            {nome: "CEO 24", lat: -21.808597, lon: -41.097505, dist: 55000},
+            {nome: "CEO 25", lat: -21.718439, lon: -41.076572, dist: 67000}
         ];
 
-        // Inicializa o mapa centralizado na rota
-        var map = L.map('map').setView([-21.786765, -41.299826], 13);
+        // Inicializa o mapa centralizado no POP
+        var map = L.map('map').setView([historicoRede[0].lat, historicoRede[0].lon], 11);
 
-        // 1. Camada Principal: Satélite de Alta Resolução da Esri
-        var sateliteLayer = L.tileLayer('https://arcgisonline.com{z}/{y}/{x}', {
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
-            attribution: 'Tiles © Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+            attribution: '© OpenStreetMap'
         }).addTo(map);
 
-        // 2. Camada de Sobreposição: Nomes de ruas e rodovias (Híbrido)
-        L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/toner-labels/{z}/{x}/{y}{r}.png', {
-            // Caso o servidor do Stamen esteja instável, usamos o OpenStreetMap Híbrido alternativo abaixo:
-        });
-        
-        // Alternativa robusta para estradas por cima do satélite (CartoDB Positron Only Labels)
-        L.tileLayer('https://{s}://{z}/{x}/{y}{r}.png', {
-            maxZoom: 19,
-            pane: 'markerPane' // Garante que o texto fique acima do mapa, mas abaixo dos nossos cabos/ícones
-        }).addTo(map);
-
-        // Desenha a rota óptica (Linha amarela/neon para destacar muito bem em cima do satélite escuro)
+        // Desenha a rota óptica (Linha Azul completa)
         var rotaCoords = historicoRede.map(p => [p.lat, p.lon]);
-        L.polyline(rotaCoords, {color: '#00ffff', weight: 5, opacity: 0.9}).addTo(map);
+        L.polyline(rotaCoords, {color: '#007bff', weight: 5, opacity: 0.75}).addTo(map);
 
-        // Plota as CEOs fixas no mapa
+        // Plota todas as CEOs no mapa
         historicoRede.forEach(ponto => {
-            L.circleMarker([ponto.lat, ponto.lon], {
-                radius: 6,
-                fillColor: "#ffcc00",
-                color: "#000",
-                weight: 2,
-                fillOpacity: 1
-            }).addTo(map).bindPopup(`<b>${ponto.nome}</b><br>Distância: ${ponto.dist}m`);
+            L.marker([ponto.lat, ponto.lon])
+                .addTo(map)
+                .bindPopup(`<b>${ponto.nome}</b><br>Distância: ${ponto.dist}m`);
         });
 
-        // Variáveis de controle para limpar marcações anteriores de falhas
         var camadaCirculoFalha = null;
         var camadaMarcadorFalha = null;
 
@@ -178,7 +181,7 @@
             if (camadaCirculoFalha) map.removeLayer(camadaCirculoFalha);
             if (camadaMarcadorFalha) map.removeLayer(camadaMarcadorFalha);
 
-            var pAnterior = historicoRede;
+            var pAnterior = historicoRede[0];
             var pSeguinte = historicoRede[historicoRede.length - 1];
             var flagEncontrado = false;
 
@@ -205,37 +208,35 @@
 
             var distDaCaixa = Math.round(dAlvo - pAnterior.dist);
 
-            document.getElementById('infoTrecho').innerHTML = `<b>Vão:</b> Entre ${pAnterior.nome} e ${pSeguinte.nome}<br><b>Afastamento da ${pAnterior.nome}:</b> ${distDaCaixa}m`;
+            document.getElementById('infoTrecho').innerHTML = `<b>Vão:</b> Entre ${pAnterior.nome} e ${pSeguinte.nome}<br><b>Distância da ${pAnterior.nome}:</b> ${distDaCaixa}m adiante`;
             document.getElementById('infoCoords').innerHTML = `${latFalha.toFixed(6)}, ${lonFalha.toFixed(6)}`;
+            
             document.getElementById('linkMaps').href = `https://google.com{latFalha.toFixed(6)},${lonFalha.toFixed(6)}`;
             document.getElementById('resultado').style.display = 'block';
 
-            // Círculo translúcido vermelho de margem de erro
             camadaCirculoFalha = L.circle([latFalha, lonFalha], {
-                color: '#ff3333',
-                fillColor: '#ff3333',
-                fillOpacity: 0.35,
+                color: 'red',
+                fillColor: '#f03',
+                fillOpacity: 0.3,
                 radius: margem
             }).addTo(map);
 
-            // Alvo central pulsante/forte
-            camadaMarcadorFalha = L.circleMarker([latFalha, lonFalha], {
-                radius: 9,
-                fillColor: "#ff0000",
-                color: "#ffffff",
-                weight: 3,
-                opacity: 1,
-                fillOpacity: 1
-            }).addTo(map);
+            var redIcon = new L.Icon({
+                iconUrl: 'https://githubusercontent.com',
+                shadowUrl: 'https://cloudflare.com',
+                iconSize:,
+                iconAnchor:,
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            });
 
-            camadaMarcadorFalha.bindPopup(`<b>⚠️ RUPTURA OPTICA</b><br>Metragem: ${dAlvo}m<br>Siga ${distDaCaixa}m da ${pAnterior.nome}`).openPopup();
+            camadaMarcadorFalha = L.marker([latFalha, lonFalha], {icon: redIcon})
+                .addTo(map)
+                .bindPopup(`<b>🚨 Rompimento Estimado</b><br>OTDR: ${dAlvo}m`)
+                .openPopup();
 
-            map.flyTo([latFalha, lonFalha], 17); // Zoom aproximado (17) para ver postes e árvores nitidamente
+            map.setView([latFalha, lonFalha], 15);
         }
-
-        window.onload = function() {
-            processarRompimento();
-        };
     </script>
 </body>
 </html>
