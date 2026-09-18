@@ -117,7 +117,7 @@
     <!-- Leaflet JS -->
     <script src="https://unpkg.com"></script>
     <script>
-        // TABELA ATUALIZADA ATÉ A CEO 25 (Dados extraídos da imagem)
+        // TABELA COMPLETA COM 25 CEOS
         var historicoRede = [
             {nome: "POP", lat: -21.767498, lon: -41.323909, dist: 0},
             {nome: "CEO 1", lat: -21.768364, lon: -41.319208, dist: 563},
@@ -147,7 +147,7 @@
             {nome: "CEO 25", lat: -21.718439, lon: -41.076572, dist: 67000}
         ];
 
-        // Inicializa o mapa centralizado no POP
+        // CORREÇÃO: Pegando o primeiro elemento [0] da lista para centralizar o mapa
         var map = L.map('map').setView([historicoRede[0].lat, historicoRede[0].lon], 11);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -155,11 +155,11 @@
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
-        // Desenha a rota óptica (Linha Azul completa)
+        // Desenha a rota óptica (Linha Azul)
         var rotaCoords = historicoRede.map(p => [p.lat, p.lon]);
         L.polyline(rotaCoords, {color: '#007bff', weight: 5, opacity: 0.75}).addTo(map);
 
-        // Plota todas as CEOs no mapa
+        // Plota todas as caixas fixas no mapa
         historicoRede.forEach(ponto => {
             L.marker([ponto.lat, ponto.lon])
                 .addTo(map)
@@ -181,6 +181,7 @@
             if (camadaCirculoFalha) map.removeLayer(camadaCirculoFalha);
             if (camadaMarcadorFalha) map.removeLayer(camadaMarcadorFalha);
 
+            // CORREÇÃO: pAnterior precisa iniciar explicitamente no primeiro item da rede
             var pAnterior = historicoRede[0];
             var pSeguinte = historicoRede[historicoRede.length - 1];
             var flagEncontrado = false;
@@ -224,8 +225,8 @@
             var redIcon = new L.Icon({
                 iconUrl: 'https://githubusercontent.com',
                 shadowUrl: 'https://cloudflare.com',
-                iconSize:,
-                iconAnchor:,
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
                 popupAnchor: [1, -34],
                 shadowSize: [41, 41]
             });
