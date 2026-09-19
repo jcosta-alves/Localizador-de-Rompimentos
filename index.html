@@ -147,7 +147,7 @@
             {nome: "CEO 25", lat: -21.718439, lon: -41.076572, dist: 67000}
         ];
 
-        // CORREÇÃO ESSENCIAL: Agora acessando o índice [0] corretamente para centralizar o mapa no POP
+        // Centraliza o mapa nas coordenadas iniciais da rede (POP)
         var map = L.map('map').setView([historicoRede[0].lat, historicoRede[0].lon], 11);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -159,7 +159,7 @@
         var rotaCoords = historicoRede.map(p => [p.lat, p.lon]);
         L.polyline(rotaCoords, {color: '#007bff', weight: 5, opacity: 0.75}).addTo(map);
 
-        // Adiciona marcadores fixos azuis para cada CEO
+        // Adiciona marcadores para cada uma das caixas fixas
         historicoRede.forEach(ponto => {
             L.marker([ponto.lat, ponto.lon])
                 .addTo(map)
@@ -181,7 +181,6 @@
             if (camadaCirculoFalha) map.removeLayer(camadaCirculoFalha);
             if (camadaMarcadorFalha) map.removeLayer(camadaMarcadorFalha);
 
-            // CORREÇÃO ESSENCIAL: pAnterior precisa iniciar explicitamente no índice [0]
             var pAnterior = historicoRede[0];
             var pSeguinte = historicoRede[historicoRede.length - 1];
             var flagEncontrado = false;
@@ -212,15 +211,12 @@
             document.getElementById('infoTrecho').innerHTML = `<b>Vão:</b> Entre ${pAnterior.nome} e ${pSeguinte.nome}<br><b>Distância da ${pAnterior.nome}:</b> ${distDaCaixa}m adiante`;
             document.getElementById('infoCoords').innerHTML = `${latFalha.toFixed(6)}, ${lonFalha.toFixed(6)}`;
             
-            // Monta a URL e vincula a ação de clique de forma correta e limpa
-            var urlMaps = `https://google.com{latFalha.toFixed(6)},${lonFalha.toFixed(6)}`;
+            var urlMaps = `https://google.com`;
             var btnMaps = document.getElementById('linkMaps');
             btnMaps.href = urlMaps;
-            btnMaps.setAttribute('onclick', `window.open('${urlMaps}', '_blank'); return false;`);
             
             document.getElementById('resultado').style.display = 'block';
 
-            // Cria o círculo vermelho indicando a margem de erro
             camadaCirculoFalha = L.circle([latFalha, lonFalha], {
                 color: 'red',
                 fillColor: '#f03',
@@ -228,7 +224,6 @@
                 radius: margem
             }).addTo(map);
 
-            // Adiciona o marcador padrão do Leaflet no ponto de falha estimado
             camadaMarcadorFalha = L.marker([latFalha, lonFalha])
                 .addTo(map)
                 .bindPopup(`<b>🚨 Rompimento Estimado</b><br>OTDR: ${dAlvo}m`)
@@ -236,11 +231,10 @@
 
             map.setView([latFalha, lonFalha], 15);
         }
+    </script>
+</body>
+</html>
 
-        // Impede que o clique no painel interaja com o mapa no fundo (fundamental para celular)
-        var painel = document.querySelector('.painel-controle');
-        if (painel) {
-            L.DomEvent.disableClickPropagation(painel);
 
 
 
