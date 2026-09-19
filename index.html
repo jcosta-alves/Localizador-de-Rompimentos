@@ -208,7 +208,7 @@
         var camadaMarcadorFalha = null;
         var historicoRede = [];
 
-        // INICIALIZAÇÃO DO MAPA
+        // INICIALIZAÇÃO FIXA DO MAPA EM CAMPOS
         map = L.map('map').setView([-21.767498, -41.323909], 12);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -218,6 +218,6 @@
 
         // FUNÇÃO QUE CARREGA E REDESENHA A ROTA SELECIONADA
         function carregarRotaSelecionada() {
-            var cidadeSel = document.getElementById('cidadeSelect').value;
+
 
 
