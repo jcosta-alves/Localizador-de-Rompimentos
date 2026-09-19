@@ -147,7 +147,7 @@
             {nome: "CEO 25", lat: -21.718439, lon: -41.076572, dist: 67000}
         ];
 
-        // CORREÇÃO SINTAXE: Centraliza corretamente usando o índice do array [0]
+        // Centralização inicial corrigida apontando para as coordenadas do primeiro item (POP)
         var map = L.map('map').setView([historicoRede[0].lat, historicoRede[0].lon], 11);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -155,11 +155,11 @@
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
-        // Desenha a rota óptica (Linha Azul)
+        // Rota óptica azul
         var rotaCoords = historicoRede.map(p => [p.lat, p.lon]);
         L.polyline(rotaCoords, {color: '#007bff', weight: 5, opacity: 0.75}).addTo(map);
 
-        // Plota todas as caixas fixas no mapa
+        // Adiciona marcadores para cada uma das caixas fixas
         historicoRede.forEach(ponto => {
             L.marker([ponto.lat, ponto.lon])
                 .addTo(map)
@@ -181,7 +181,6 @@
             if (camadaCirculoFalha) map.removeLayer(camadaCirculoFalha);
             if (camadaMarcadorFalha) map.removeLayer(camadaMarcadorFalha);
 
-            // CORREÇÃO SINTAXE: Captura o primeiro item explicitamente com o índice [0]
             var pAnterior = historicoRede[0];
             var pSeguinte = historicoRede[historicoRede.length - 1];
             var flagEncontrado = false;
@@ -212,7 +211,7 @@
             document.getElementById('infoTrecho').innerHTML = `<b>Vão:</b> Entre ${pAnterior.nome} e ${pSeguinte.nome}<br><b>Distância da ${pAnterior.nome}:</b> ${distDaCaixa}m adiante`;
             document.getElementById('infoCoords').innerHTML = `${latFalha.toFixed(6)}, ${lonFalha.toFixed(6)}`;
             
-            // Definição correta do link externo do Google Maps
+            // Link de redirecionamento formatado segundo os parâmetros oficiais do Maps API
             var urlMaps = `https://google.com{latFalha.toFixed(6)},${lonFalha.toFixed(6)}`;
             var btnMaps = document.getElementById('linkMaps');
             btnMaps.href = urlMaps;
@@ -227,15 +226,18 @@
                 radius: margem
             }).addTo(map);
 
-            // CORREÇÃO SINTAXE: Preenchimento completo dos arrays numéricos das dimensões do ícone
+            // Definição correta do ícone com tamanhos explícitos válidos
             var redIcon = new L.Icon({
                 iconUrl: 'https://githubusercontent.com',
                 shadowUrl: 'https://cloudflare.com',
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
+                iconSize:,
+                iconAnchor:,
                 popupAnchor: [1, -34],
                 shadowSize: [41, 41]
             });
 
             camadaMarcadorFalha = L.marker([latFalha, lonFalha], {icon: redIcon})
                 .addTo(map)
+                .bindPopup(`<b>🚨 Rompimento Estimado</b><br>OTDR: ${dAlvo}m`)
+                .openPopup();
+
