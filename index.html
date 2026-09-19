@@ -35,7 +35,6 @@
             color: #333;
             border-bottom: 2px solid #007bff;
             padding-bottom: 5px;
-            margin-bottom: 12px;
         }
         .form-group {
             margin-bottom: 12px;
@@ -46,13 +45,12 @@
             font-weight: bold;
             font-size: 14px;
         }
-        .form-group input, .form-group select {
+        .form-group input {
             width: 100%;
             padding: 8px;
             border: 1px solid #ccc;
             border-radius: 4px;
             box-sizing: border-box;
-            font-size: 14px;
         }
         .btn-calcular {
             width: 100%;
@@ -96,21 +94,6 @@
 
     <div class="painel-controle">
         <h3>⚡ Localizador OTDR</h3>
-        
-        <div class="form-group">
-            <label for="cidadeSelect">Cidade:</label>
-            <select id="cidadeSelect" onchange="atualizarOpcoesRotas()">
-                <option value="Campos dos Goytacazes">Campos dos Goytacazes</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="rotaSelect">Rota:</label>
-            <select id="rotaSelect" onchange="carregarRotaSelecionada()">
-                <option value="Anel 20883">Anel 20883 (25 Caixas)</option>
-                <option value="Anel 41518 LD PQ Aurora">Anel 41518 LD PQ Aurora (30 Caixas)</option>
-            </select>
-        </div>
-
         <div class="form-group">
             <label for="distanciaInput">Distância do Rompimento (metros):</label>
             <input type="number" id="distanciaInput" placeholder="Ex: 3600" value="3600">
@@ -134,90 +117,124 @@
     <!-- Leaflet JS -->
     <script src="https://unpkg.com"></script>
     <script>
-        // BANCO DE DADOS DE ROTAS ORGANIZADO
-        var bancoDeRotas = {
-            "Campos dos Goytacazes": {
-                "Anel 20883": [
-                    {nome: "POP", lat: -21.767498, lon: -41.323909, dist: 0},
-                    {nome: "CEO 1", lat: -21.768364, lon: -41.319208, dist: 563},
-                    {nome: "CEO 2", lat: -21.770566, lon: -41.314413, dist: 1304},
-                    {nome: "CEO 3", lat: -21.779781, lon: -41.304176, dist: 2625},
-                    {nome: "CEO 4", lat: -21.786765, lon: -41.299826, dist: 3506},
-                    {nome: "CEO 5", lat: -21.796018, lon: -41.299603, dist: 4830},
-                    {nome: "CEO 6", lat: -21.800732, lon: -41.298256, dist: 5200},
-                    {nome: "CEO 7", lat: -21.808306, lon: -41.296134, dist: 6790},
-                    {nome: "CEO 8", lat: -21.814318, lon: -41.294389, dist: 7300},
-                    {nome: "CEO 9", lat: -21.818735, lon: -41.294476, dist: 8000},
-                    {nome: "CEO 10", lat: -21.827977, lon: -41.278078, dist: 9800},
-                    {nome: "CEO 11", lat: -21.831563, lon: -41.271063, dist: 11910},
-                    {nome: "CEO 12", lat: -21.855369, lon: -41.241984, dist: 16610},
-                    {nome: "CEO 13", lat: -21.883558, lon: -41.211603, dist: 21836},
-                    {nome: "CEO 14", lat: -21.887737, lon: -41.199668, dist: 23271},
-                    {nome: "CEO 15", lat: -21.880663, lon: -41.191602, dist: 24060},
-                    {nome: "CEO 16", lat: -21.924544, lon: -41.144648, dist: 31360},
-                    {nome: "CEO 17", lat: -21.910138, lon: -41.137872, dist: 33490},
-                    {nome: "CEO 18", lat: -21.907053, lon: -41.124307, dist: 36041},
-                    {nome: "CEO 19", lat: -21.906017, lon: -41.122693, dist: 36250},
-                    {nome: "CEO 20", lat: -21.882133, lon: -41.117229, dist: 39880},
-                    {nome: "CEO 21", lat: -21.866638, lon: -41.083234, dist: 42800},
-                    {nome: "CEO 22", lat: -21.835863, lon: -41.098580, dist: 47891},
-                    {nome: "CEO 23", lat: -21.805718, lon: -41.092651, dist: 54086},
-                    {nome: "CEO 24", lat: -21.808597, lon: -41.097505, dist: 55000},
-                    {nome: "CEO 25", lat: -21.718439, lon: -41.076572, dist: 67000}
-                ],
-                "Anel 41518 LD PQ Aurora": [
-                    {nome: "POP", lat: -21.767498, lon: -41.323909, dist: 0},
-                    {nome: "CEO 1", lat: -21.769028, lon: -41.323977, dist: 660},
-                    {nome: "CEO 2", lat: -21.776473, lon: -41.325867, dist: 1120},
-                    {nome: "CEO 3", lat: -21.776162, lon: -41.326740, dist: 1250},
-                    {nome: "CEO 4", lat: -21.777291, lon: -41.326542, dist: 1500},
-                    {nome: "CEO 5", lat: -21.777732, lon: -41.325374, dist: 1630},
-                    {nome: "CEO 6", lat: -21.779084, lon: -41.324958, dist: 1850},
-                    {nome: "CEO 7", lat: -21.779558, lon: -41.321585, dist: 2250},
-                    {nome: "CEO 8", lat: -21.779429, lon: -41.320052, dist: 2500},
-                    {nome: "CEO 9", lat: -21.775702, lon: -41.319993, dist: 2920},
-                    {nome: "CEO 10", lat: -21.774055, lon: -41.318676, dist: 3280},
-                    {nome: "CEO 11", lat: -21.774889, lon: -41.316584, dist: 3530},
-                    {nome: "CEO 12", lat: -21.770974, lon: -41.313968, dist: 4100},
-                    {nome: "CEO 13", lat: -21.768123, lon: -41.312032, dist: 4500},
-                    {nome: "CEO 14", lat: -21.763767, lon: -41.309122, dist: 5250},
-                    {nome: "CEO 15", lat: -21.761542, lon: -41.307630, dist: 6000},
-                    {nome: "CEO 16", lat: -21.759771, lon: -41.311625, dist: 6600},
-                    {nome: "CEO 17", lat: -21.759442, lon: -41.313360, dist: 6800},
-                    {nome: "CEO 18", lat: -21.758956, lon: -41.315974, dist: 7100},
-                    {nome: "CEO 19", lat: -21.757706, lon: -41.319396, dist: 7660},
-                    {nome: "CEO 20", lat: -21.756319, lon: -41.322746, dist: 8300},
-                    {nome: "CEO 21", lat: -21.757081, lon: -41.325657, dist: 9100},
-                    {nome: "CEO 22", lat: -21.758214, lon: -41.326514, dist: 9300},
-                    {nome: "CEO 23", lat: -21.755263, lon: -41.326446, dist: 9800},
-                    {nome: "CEO 24", lat: -21.753914, lon: -41.325231, dist: 10350},
-                    {nome: "CEO 25", lat: -21.751756, lon: -41.323133, dist: 10800},
-                    {nome: "CEO 26", lat: -21.752247, lon: -41.319882, dist: 11150},
-                    {nome: "CEO 27", lat: -21.750077, lon: -41.310823, dist: 12200},
-                    {nome: "CEO 28", lat: -21.744157, lon: -41.313554, dist: 13000},
-                    {nome: "CEO 29", lat: -21.734023, lon: -41.313423, dist: 14300}
-                ]
-            }
-        };
+        // TABELA ORIGINAL COM 25 CEOS
+        var historicoRede = [
+            {nome: "POP", lat: -21.767498, lon: -41.323909, dist: 0},
+            {nome: "CEO 1", lat: -21.768364, lon: -41.319208, dist: 563},
+            {nome: "CEO 2", lat: -21.770566, lon: -41.314413, dist: 1304},
+            {nome: "CEO 3", lat: -21.779781, lon: -41.304176, dist: 2625},
+            {nome: "CEO 4", lat: -21.786765, lon: -41.299826, dist: 3506},
+            {nome: "CEO 5", lat: -21.796018, lon: -41.299603, dist: 4830},
+            {nome: "CEO 6", lat: -21.800732, lon: -41.298256, dist: 5200},
+            {nome: "CEO 7", lat: -21.808306, lon: -41.296134, dist: 6790},
+            {nome: "CEO 8", lat: -21.814318, lon: -41.294389, dist: 7300},
+            {nome: "CEO 9", lat: -21.818735, lon: -41.294476, dist: 8000},
+            {nome: "CEO 10", lat: -21.827977, lon: -41.278078, dist: 9800},
+            {nome: "CEO 11", lat: -21.831563, lon: -41.271063, dist: 11910},
+            {nome: "CEO 12", lat: -21.855369, lon: -41.241984, dist: 16610},
+            {nome: "CEO 13", lat: -21.883558, lon: -41.211603, dist: 21836},
+            {nome: "CEO 14", lat: -21.887737, lon: -41.199668, dist: 23271},
+            {nome: "CEO 15", lat: -21.880663, lon: -41.191602, dist: 24060},
+            {nome: "CEO 16", lat: -21.924544, lon: -41.144648, dist: 31360},
+            {nome: "CEO 17", lat: -21.910138, lon: -41.137872, dist: 33490},
+            {nome: "CEO 18", lat: -21.907053, lon: -41.124307, dist: 36041},
+            {nome: "CEO 19", lat: -21.906017, lon: -41.122693, dist: 36250},
+            {nome: "CEO 20", lat: -21.882133, lon: -41.117229, dist: 39880},
+            {nome: "CEO 21", lat: -21.866638, lon: -41.083234, dist: 42800},
+            {nome: "CEO 22", lat: -21.835863, lon: -41.098580, dist: 47891},
+            {nome: "CEO 23", lat: -21.805718, lon: -41.092651, dist: 54086},
+            {nome: "CEO 24", lat: -21.808597, lon: -41.097505, dist: 55000},
+            {nome: "CEO 25", lat: -21.718439, lon: -41.076572, dist: 67000}
+        ];
 
-        // VARIÁVEIS GLOBAIS DE CONTROLE DO MAPA
-        var map;
-        var camadaRotaLink = null;
-        var marcadoresCaixasFixas = [];
-        var camadaCirculoFalha = null;
-        var camadaMarcadorFalha = null;
-        var historicoRede = [];
-
-        // INICIALIZAÇÃO FIXA DO MAPA EM CAMPOS
-        map = L.map('map').setView([-21.767498, -41.323909], 12);
+        // Inicialização padrão estável focada no POP
+        var map = L.map('map').setView([historicoRede[0].lat, historicoRede[0].lon], 11);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
-        // FUNÇÃO QUE CARREGA E REDESENHA A ROTA SELECIONADA
-        function carregarRotaSelecionada() {
+        // Desenha a rota óptica (Linha Azul)
+        var rotaCoords = historicoRede.map(p => [p.lat, p.lon]);
+        L.polyline(rotaCoords, {color: '#007bff', weight: 5, opacity: 0.75}).addTo(map);
+
+        // Plota todas as caixas fixas no mapa
+        historicoRede.forEach(ponto => {
+            L.marker([ponto.lat, ponto.lon])
+                .addTo(map)
+                .bindPopup(`<b>${ponto.nome}</b><br>Distância: ${ponto.dist}m`);
+        });
+
+        var camadaCirculoFalha = null;
+        var camadaMarcadorFalha = null;
+
+        function processarRompimento() {
+            var dAlvo = parseFloat(document.getElementById('distanciaInput').value);
+            var margem = parseFloat(document.getElementById('margemInput').value) || 0;
+            
+            if (isNaN(dAlvo) || dAlvo < 0) {
+                alert("Por favor, digite uma metragem válida.");
+                return;
+            }
+
+            if (camadaCirculoFalha) map.removeLayer(camadaCirculoFalha);
+            if (camadaMarcadorFalha) map.removeLayer(camadaMarcadorFalha);
+
+            var pAnterior = historicoRede[0];
+            var pSeguinte = historicoRede[historicoRede.length - 1];
+            var flagEncontrado = false;
+
+            for (var i = 0; i < historicoRede.length - 1; i++) {
+                if (historicoRede[i].dist <= dAlvo && dAlvo <= historicoRede[i+1].dist) {
+                    pAnterior = historicoRede[i];
+                    pSeguinte = historicoRede[i+1];
+                    flagEncontrado = true;
+                    break;
+                }
+            }
+
+            if (!flagEncontrado && dAlvo > historicoRede[historicoRede.length - 1].dist) {
+                pAnterior = historicoRede[historicoRede.length - 2];
+                pSeguinte = historicoRede[historicoRede.length - 1];
+            }
+
+            var d1 = pAnterior.dist;
+            var d2 = pSeguinte.dist;
+            var t = (d2 === d1) ? 0 : (dAlvo - d1) / (d2 - d1);
+
+            var latFalha = pAnterior.lat + t * (pSeguinte.lat - pAnterior.lat);
+            var lonFalha = pAnterior.lon + t * (pSeguinte.lon - pAnterior.lon);
+
+            var distDaCaixa = Math.round(dAlvo - pAnterior.dist);
+
+            document.getElementById('infoTrecho').innerHTML = `<b>Vão:</b> Entre ${pAnterior.nome} e ${pSeguinte.nome}<br><b>Distância da ${pAnterior.nome}:</b> ${distDaCaixa}m adiante`;
+            document.getElementById('infoCoords').innerHTML = `${latFalha.toFixed(6)}, ${lonFalha.toFixed(6)}`;
+            
+            var urlMaps = `https://google.com`;
+            var btnMaps = document.getElementById('linkMaps');
+            btnMaps.href = urlMaps;
+            
+            document.getElementById('resultado').style.display = 'block';
+
+            camadaCirculoFalha = L.circle([latFalha, lonFalha], {
+                color: 'red',
+                fillColor: '#f03',
+                fillOpacity: 0.3,
+                radius: margem
+            }).addTo(map);
+
+            camadaMarcadorFalha = L.marker([latFalha, lonFalha])
+                .addTo(map)
+                .bindPopup(`<b>🚨 Rompimento Estimado</b><br>OTDR: ${dAlvo}m`)
+                .openPopup();
+
+            map.setView([latFalha, lonFalha], 15);
+        }
+    </script>
+</body>
+</html>
+
 
 
 
