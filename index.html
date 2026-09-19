@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculador Dinâmico de Rompimento de Fibra</title>
     
-    <!-- Leaflet CSS - Corrigido para carregar o mapa perfeitamente -->
-    <link rel="stylesheet" href="https://unpkg.com" />
+    <!-- Leaflet CSS - Links Oficiais e Corretos -->
+    <link rel="stylesheet" href="https://unpkg.com" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     
     <style>
         body, html {
@@ -95,11 +95,10 @@
     <div class="painel-controle">
         <h3>⚡ Localizador OTDR</h3>
         
-        <!-- Menu seletor de rotas integrado ao bancoDeRotas -->
         <div class="form-group">
             <label for="rotaSelect">Selecione a Rota/Anel:</label>
             <select id="rotaSelect" onchange="carregarRotaNoMapa()">
-                <!-- As opções do bancoDeRotas entram aqui dinamicamente -->
+                <!-- Opções injetadas automaticamente -->
             </select>
         </div>
 
@@ -114,7 +113,7 @@
         <button class="btn-calcular" onclick="processarRompimento()">Calcular Falha</button>
 
         <div id="resultado" class="resultado-alerta">
-            <strong>🚨 Falha Detected!</strong>
+            <strong>🚨 Falha Detectada!</strong>
             <p id="infoTrecho" style="margin: 5px 0; font-size: 13px;"></p>
             <p id="infoCoords" style="margin: 5px 0; font-size: 13px; font-family: monospace;"></p>
             <a id="linkMaps" href="#" target="_blank" class="btn-maps">Abrir no Google Maps</a>
@@ -123,14 +122,14 @@
 
     <div id="map"></div>
 
-    <!-- Leaflet JS - Corrigido para renderizar os mapas e marcadores -->
-    <script src="https://unpkg.com"></script>
+    <!-- Leaflet JS - Links Oficiais e Corretos -->
+    <script src="https://unpkg.com" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     
-    <!-- Chamada correta para o seu arquivo no singular -->
+    <!-- Chamada do arquivo de dados externo -->
     <script src="rota.js"></script>
 
     <script>
-        // Inicializa o mapa focado na região de Campos dos Goytacazes
+        // Inicialização do mapa base focado na região
         var map = L.map('map').setView([-21.767498, -41.323909], 11);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -138,13 +137,12 @@
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
-        // Controladores das camadas para limpar elementos antigos ao trocar de anel
         var camadaPolilinha = null;
         var grupoMarcadoresCeo = L.layerGroup().addTo(map);
         var camadaCirculoFalha = null;
         var camadaMarcadorFalha = null;
 
-        // Preenche o menu <select> automaticamente usando as chaves do seu arquivo rota.js
+        // Identifica e injeta as chaves do arquivo rota.js no select
         var selectElement = document.getElementById('rotaSelect');
         if (typeof bancoDeRotas !== 'undefined') {
             Object.keys(bancoDeRotas).forEach(function(nomeRota) {
@@ -154,17 +152,15 @@
                 selectElement.appendChild(option);
             });
         } else {
-            alert("Erro: O arquivo rota.js não foi encontrado ou a variável bancoDeRotas não existe.");
+            alert("Erro crítico: O arquivo 'rota.js' não foi detectado ou está mal estruturado.");
         }
 
-        // Desenha la linha óptica e distribui os pins das caixas (CEOs) no mapa
         function carregarRotaNoMapa() {
             var nomeRota = selectElement.value;
             if (!nomeRota) return;
             
             var rotaAtual = bancoDeRotas[nomeRota];
 
-            // Limpa marcações e rotas antigas antes de desenhar a nova
             if (camadaPolilinha) map.removeLayer(camadaPolilinha);
             grupoMarcadoresCeo.clearLayers();
             if (camadaCirculoFalha) map.removeLayer(camadaCirculoFalha);
@@ -173,14 +169,11 @@
 
             if (!rotaAtual || rotaAtual.length === 0) return;
 
-            // Desenha a linha azul da rota óptica
             var rotaCoords = rotaAtual.map(function(p) { return [p.lat, p.lon]; });
             camadaPolilinha = L.polyline(rotaCoords, {color: '#007bff', weight: 5, opacity: 0.75}).addTo(map);
 
-            // Ajusta o zoom do mapa automaticamente para enquadrar toda a rota selecionada
             map.fitBounds(camadaPolilinha.getBounds());
 
-            // Coloca os marcadores de cada CEO com popup de distância
             rotaAtual.forEach(function(ponto) {
                 L.marker([ponto.lat, ponto.lon])
                     .addTo(grupoMarcadoresCeo)
@@ -188,7 +181,6 @@
             });
         }
 
-        // Executa a matemática de interpolação linear para achar o ponto exato da quebra
         function processarRompimento() {
             var nomeRota = selectElement.value;
             var historicoRede = bancoDeRotas[nomeRota];
@@ -197,16 +189,12 @@
             var margem = parseFloat(document.getElementById('margemInput').value) || 0;
             
             if (isNaN(dAlvo) || dAlvo < 0) {
-                alert("Por favor, digite uma metragem válida.");
+                alert("Por favor, preencha uma metragem correta.");
                 return;
             }
 
-            if (!historicoRede || historicoRede.length === 0) {
-                alert("Erro: Dados da rota não disponíveis.");
-                return;
-            }
+            if (!historicoRede || historicoRede.length === 0) return;
 
-            // Remove o indicador de falha anterior para não acumular no mapa
             if (camadaCirculoFalha) map.removeLayer(camadaCirculoFalha);
             if (camadaMarcadorFalha) map.removeLayer(camadaMarcadorFalha);
 
@@ -214,7 +202,6 @@
             var pSeguinte = historicoRede[historicoRede.length - 1];
             var flagEncontrado = false;
 
-            // Percorre o array para descobrir em qual vão (entre quais CEOs) caiu a metragem
             for (var i = 0; i < historicoRede.length - 1; i++) {
                 var pontoAtual = historicoRede[i];
                 var pontoProximo = historicoRede[i + 1];
@@ -227,7 +214,6 @@
                 }
             }
 
-            // Proteção de segurança caso o OTDR marque uma distância maior que o fim da rota
             if (!flagEncontrado && dAlvo > pSeguinte.dist) {
                 pAnterior = historicoRede[historicoRede.length - 2];
                 pSeguinte = historicoRede[historicoRede.length - 1];
@@ -237,11 +223,9 @@
             var d2 = pSeguinte.dist;
             var t = (d2 === d1) ? 0 : (dAlvo - d1) / (d2 - d1);
 
-            // Interpolação geográfica das coordenadas
             var latFalha = pAnterior.lat + (pSeguinte.lat - pAnterior.lat) * t;
             var lonFalha = pAnterior.lon + (pSeguinte.lon - pAnterior.lon) * t;
 
-            // Plota o raio/círculo vermelho da margem de erro
             camadaCirculoFalha = L.circle([latFalha, lonFalha], {
                 color: 'red',
                 fillColor: '#f03',
@@ -249,13 +233,24 @@
                 radius: margem
             }).addTo(map);
 
-            // Adiciona o pin marcador vermelho no ponto exato calculado com tamanhos corrigidos
-            camadaMarcadorFalha = L.marker([latFalha, lonFalha], {
-                icon: L.icon({
-                    iconUrl: 'https://githubusercontent.com',
-                    shadowUrl: 'https://cloudflare.com',
-                    iconSize:,
-                    iconAnchor:,
+            // Marcador padrão Leaflet para evitar erros de caminhos de imagens externas
+            camadaMarcadorFalha = L.marker([latFalha, lonFalha]).addTo(map)
+                .bindPopup(`<b>Ponto Provável do Rompimento</b><br>OTDR: ${dAlvo}m`).openPopup();
+
+            map.setView([latFalha, lonFalha], 15);
+
+            document.getElementById('infoTrecho').textContent = `Trecho aproximado: Entre ${pAnterior.nome} e ${pSeguinte.nome}`;
+            document.getElementById('infoCoords').textContent = `${latFalha.toFixed(6)}, ${lonFalha.toFixed(6)}`;
+            document.getElementById('linkMaps').href = `https://google.com{latFalha},${lonFalha}`;
+            document.getElementById('resultado').style.display = 'block';
+        }
+
+        // Executa o carregamento inicial da rota ativa
+        carregarRotaNoMapa();
+    </script>
+</body>
+</html>
+
 
 
 
