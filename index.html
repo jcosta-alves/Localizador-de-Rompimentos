@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculador Dinâmico de Rompimento de Fibra</title>
     
-    <!-- Leaflet CSS -->
+    <!-- Leaflet CSS - Corrigido para carregar o mapa perfeitamente -->
     <link rel="stylesheet" href="https://unpkg.com" />
     
     <style>
@@ -45,7 +45,7 @@
             font-weight: bold;
             font-size: 14px;
         }
-        .form-group input {
+        .form-group input, .form-group select {
             width: 100%;
             padding: 8px;
             border: 1px solid #ccc;
@@ -94,6 +94,15 @@
 
     <div class="painel-controle">
         <h3>⚡ Localizador OTDR</h3>
+        
+        <!-- Menu seletor de rotas integrado ao bancoDeRotas -->
+        <div class="form-group">
+            <label for="rotaSelect">Selecione a Rota/Anel:</label>
+            <select id="rotaSelect" onchange="carregarRotaNoMapa()">
+                <!-- As opções do bancoDeRotas entram aqui dinamicamente -->
+            </select>
+        </div>
+
         <div class="form-group">
             <label for="distanciaInput">Distância do Rompimento (metros):</label>
             <input type="number" id="distanciaInput" placeholder="Ex: 3600" value="3600">
@@ -105,7 +114,7 @@
         <button class="btn-calcular" onclick="processarRompimento()">Calcular Falha</button>
 
         <div id="resultado" class="resultado-alerta">
-            <strong>🚨 Falha Detectada!</strong>
+            <strong>🚨 Falha Detected!</strong>
             <p id="infoTrecho" style="margin: 5px 0; font-size: 13px;"></p>
             <p id="infoCoords" style="margin: 5px 0; font-size: 13px; font-family: monospace;"></p>
             <a id="linkMaps" href="#" target="_blank" class="btn-maps">Abrir no Google Maps</a>
@@ -114,40 +123,14 @@
 
     <div id="map"></div>
 
-    <!-- Leaflet JS -->
+    <!-- Leaflet JS - Corrigido para renderizar os mapas e marcadores -->
     <script src="https://unpkg.com"></script>
-    <script>
-        // TABELA ORIGINAL COM 25 CEOS
-        var historicoRede = [
-            {nome: "POP", lat: -21.767498, lon: -41.323909, dist: 0},
-            {nome: "CEO 1", lat: -21.768364, lon: -41.319208, dist: 563},
-            {nome: "CEO 2", lat: -21.770566, lon: -41.314413, dist: 1304},
-            {nome: "CEO 3", lat: -21.779781, lon: -41.304176, dist: 2625},
-            {nome: "CEO 4", lat: -21.786765, lon: -41.299826, dist: 3506},
-            {nome: "CEO 5", lat: -21.796018, lon: -41.299603, dist: 4830},
-            {nome: "CEO 6", lat: -21.800732, lon: -41.298256, dist: 5200},
-            {nome: "CEO 7", lat: -21.808306, lon: -41.296134, dist: 6790},
-            {nome: "CEO 8", lat: -21.814318, lon: -41.294389, dist: 7300},
-            {nome: "CEO 9", lat: -21.818735, lon: -41.294476, dist: 8000},
-            {nome: "CEO 10", lat: -21.827977, lon: -41.278078, dist: 9800},
-            {nome: "CEO 11", lat: -21.831563, lon: -41.271063, dist: 11910},
-            {nome: "CEO 12", lat: -21.855369, lon: -41.241984, dist: 16610},
-            {nome: "CEO 13", lat: -21.883558, lon: -41.211603, dist: 21836},
-            {nome: "CEO 14", lat: -21.887737, lon: -41.199668, dist: 23271},
-            {nome: "CEO 15", lat: -21.880663, lon: -41.191602, dist: 24060},
-            {nome: "CEO 16", lat: -21.924544, lon: -41.144648, dist: 31360},
-            {nome: "CEO 17", lat: -21.910138, lon: -41.137872, dist: 33490},
-            {nome: "CEO 18", lat: -21.907053, lon: -41.124307, dist: 36041},
-            {nome: "CEO 19", lat: -21.906017, lon: -41.122693, dist: 36250},
-            {nome: "CEO 20", lat: -21.882133, lon: -41.117229, dist: 39880},
-            {nome: "CEO 21", lat: -21.866638, lon: -41.083234, dist: 42800},
-            {nome: "CEO 22", lat: -21.835863, lon: -41.098580, dist: 47891},
-            {nome: "CEO 23", lat: -21.805718, lon: -41.092651, dist: 54086},
-            {nome: "CEO 24", lat: -21.808597, lon: -41.097505, dist: 55000},
-            {nome: "CEO 25", lat: -21.718439, lon: -41.076572, dist: 67000}
-        ];
+    
+    <!-- Chamada correta para o seu arquivo no singular -->
+    <script src="rota.js"></script>
 
-        // Centraliza o mapa diretamente nas coordenadas fixas do POP
+    <script>
+        // Inicializa o mapa focado na região de Campos dos Goytacazes
         var map = L.map('map').setView([-21.767498, -41.323909], 11);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -155,21 +138,61 @@
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
-        // Desenha a rota óptica (Linha Azul)
-        var rotaCoords = historicoRede.map(function(p) { return [p.lat, p.lon]; });
-        L.polyline(rotaCoords, {color: '#007bff', weight: 5, opacity: 0.75}).addTo(map);
-
-        // Plota todas as caixas fixas no mapa
-        historicoRede.forEach(function(ponto) {
-            L.marker([ponto.lat, ponto.lon])
-                .addTo(map)
-                .bindPopup(`<b>${ponto.nome}</b><br>Distância: ${ponto.dist}m`);
-        });
-
+        // Controladores das camadas para limpar elementos antigos ao trocar de anel
+        var camadaPolilinha = null;
+        var grupoMarcadoresCeo = L.layerGroup().addTo(map);
         var camadaCirculoFalha = null;
         var camadaMarcadorFalha = null;
 
+        // Preenche o menu <select> automaticamente usando as chaves do seu arquivo rota.js
+        var selectElement = document.getElementById('rotaSelect');
+        if (typeof bancoDeRotas !== 'undefined') {
+            Object.keys(bancoDeRotas).forEach(function(nomeRota) {
+                var option = document.createElement('option');
+                option.value = nomeRota;
+                option.textContent = nomeRota;
+                selectElement.appendChild(option);
+            });
+        } else {
+            alert("Erro: O arquivo rota.js não foi encontrado ou a variável bancoDeRotas não existe.");
+        }
+
+        // Desenha la linha óptica e distribui os pins das caixas (CEOs) no mapa
+        function carregarRotaNoMapa() {
+            var nomeRota = selectElement.value;
+            if (!nomeRota) return;
+            
+            var rotaAtual = bancoDeRotas[nomeRota];
+
+            // Limpa marcações e rotas antigas antes de desenhar a nova
+            if (camadaPolilinha) map.removeLayer(camadaPolilinha);
+            grupoMarcadoresCeo.clearLayers();
+            if (camadaCirculoFalha) map.removeLayer(camadaCirculoFalha);
+            if (camadaMarcadorFalha) map.removeLayer(camadaMarcadorFalha);
+            document.getElementById('resultado').style.display = 'none';
+
+            if (!rotaAtual || rotaAtual.length === 0) return;
+
+            // Desenha a linha azul da rota óptica
+            var rotaCoords = rotaAtual.map(function(p) { return [p.lat, p.lon]; });
+            camadaPolilinha = L.polyline(rotaCoords, {color: '#007bff', weight: 5, opacity: 0.75}).addTo(map);
+
+            // Ajusta o zoom do mapa automaticamente para enquadrar toda a rota selecionada
+            map.fitBounds(camadaPolilinha.getBounds());
+
+            // Coloca os marcadores de cada CEO com popup de distância
+            rotaAtual.forEach(function(ponto) {
+                L.marker([ponto.lat, ponto.lon])
+                    .addTo(grupoMarcadoresCeo)
+                    .bindPopup(`<b>${ponto.nome}</b><br>Distância: ${ponto.dist}m`);
+            });
+        }
+
+        // Executa a matemática de interpolação linear para achar o ponto exato da quebra
         function processarRompimento() {
+            var nomeRota = selectElement.value;
+            var historicoRede = bancoDeRotas[nomeRota];
+            
             var dAlvo = parseFloat(document.getElementById('distanciaInput').value);
             var margem = parseFloat(document.getElementById('margemInput').value) || 0;
             
@@ -178,18 +201,23 @@
                 return;
             }
 
+            if (!historicoRede || historicoRede.length === 0) {
+                alert("Erro: Dados da rota não disponíveis.");
+                return;
+            }
+
+            // Remove o indicador de falha anterior para não acumular no mapa
             if (camadaCirculoFalha) map.removeLayer(camadaCirculoFalha);
             if (camadaMarcadorFalha) map.removeLayer(camadaMarcadorFalha);
 
-            // Resgatando referências extremas de forma blindada sem colchetes de índice zero
-            var listaSegura = historicoRede.slice();
-            var pAnterior = listaSegura.shift();
-            var pSeguinte = listaSegura.pop();
+            var pAnterior = historicoRede[0];
+            var pSeguinte = historicoRede[historicoRede.length - 1];
             var flagEncontrado = false;
 
+            // Percorre o array para descobrir em qual vão (entre quais CEOs) caiu a metragem
             for (var i = 0; i < historicoRede.length - 1; i++) {
-                var pontoAtual = historicoRede.slice(i, i + 1).shift();
-                var pontoProximo = historicoRede.slice(i + 1, i + 2).shift();
+                var pontoAtual = historicoRede[i];
+                var pontoProximo = historicoRede[i + 1];
 
                 if (pontoAtual.dist <= dAlvo && dAlvo <= pontoProximo.dist) {
                     pAnterior = pontoAtual;
@@ -199,30 +227,21 @@
                 }
             }
 
+            // Proteção de segurança caso o OTDR marque uma distância maior que o fim da rota
             if (!flagEncontrado && dAlvo > pSeguinte.dist) {
-                var listaInvertida = historicoRede.slice();
-                pSeguinte = listaInvertida.pop();
-                pAnterior = listaInvertida.pop();
+                pAnterior = historicoRede[historicoRede.length - 2];
+                pSeguinte = historicoRede[historicoRede.length - 1];
             }
 
             var d1 = pAnterior.dist;
             var d2 = pSeguinte.dist;
             var t = (d2 === d1) ? 0 : (dAlvo - d1) / (d2 - d1);
 
-            var latFalha = pAnterior.lat + t * (pSeguinte.lat - pAnterior.lat);
-            var lonFalha = pAnterior.lon + t * (pSeguinte.lon - pAnterior.lon);
+            // Interpolação geográfica das coordenadas
+            var latFalha = pAnterior.lat + (pSeguinte.lat - pAnterior.lat) * t;
+            var lonFalha = pAnterior.lon + (pSeguinte.lon - pAnterior.lon) * t;
 
-            var distDaCaixa = Math.round(dAlvo - pAnterior.dist);
-
-            document.getElementById('infoTrecho').innerHTML = `<b>Vão:</b> Entre ${pAnterior.nome} e ${pSeguinte.nome}<br><b>Distância da ${pAnterior.nome}:</b> ${distDaCaixa}m adiante`;
-            document.getElementById('infoCoords').innerHTML = `${latFalha.toFixed(6)}, ${lonFalha.toFixed(6)}`;
-            
-            var urlMaps = `https://google.com`;
-            var btnMaps = document.getElementById('linkMaps');
-            btnMaps.href = urlMaps;
-            
-            document.getElementById('resultado').style.display = 'block';
-
+            // Plota o raio/círculo vermelho da margem de erro
             camadaCirculoFalha = L.circle([latFalha, lonFalha], {
                 color: 'red',
                 fillColor: '#f03',
@@ -230,16 +249,14 @@
                 radius: margem
             }).addTo(map);
 
-            camadaMarcadorFalha = L.marker([latFalha, lonFalha])
-                .addTo(map)
-                .bindPopup(`<b>🚨 Rompimento Estimado</b><br>OTDR: ${dAlvo}m`)
-                .openPopup();
+            // Adiciona o pin marcador vermelho no ponto exato calculado com tamanhos corrigidos
+            camadaMarcadorFalha = L.marker([latFalha, lonFalha], {
+                icon: L.icon({
+                    iconUrl: 'https://githubusercontent.com',
+                    shadowUrl: 'https://cloudflare.com',
+                    iconSize:,
+                    iconAnchor:,
 
-            map.setView([latFalha, lonFalha], 15);
-        }
-    </script>
-</body>
-</html>
 
 
 
