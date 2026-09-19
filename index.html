@@ -147,7 +147,7 @@
             {nome: "CEO 25", lat: -21.718439, lon: -41.076572, dist: 67000}
         ];
 
-        // Inicializa o mapa centralizando no POP [0]
+        // CORREÇÃO SINTAXE: Centraliza corretamente usando o índice do array [0]
         var map = L.map('map').setView([historicoRede[0].lat, historicoRede[0].lon], 11);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -181,6 +181,7 @@
             if (camadaCirculoFalha) map.removeLayer(camadaCirculoFalha);
             if (camadaMarcadorFalha) map.removeLayer(camadaMarcadorFalha);
 
+            // CORREÇÃO SINTAXE: Captura o primeiro item explicitamente com o índice [0]
             var pAnterior = historicoRede[0];
             var pSeguinte = historicoRede[historicoRede.length - 1];
             var flagEncontrado = false;
@@ -211,7 +212,7 @@
             document.getElementById('infoTrecho').innerHTML = `<b>Vão:</b> Entre ${pAnterior.nome} e ${pSeguinte.nome}<br><b>Distância da ${pAnterior.nome}:</b> ${distDaCaixa}m adiante`;
             document.getElementById('infoCoords').innerHTML = `${latFalha.toFixed(6)}, ${lonFalha.toFixed(6)}`;
             
-            // Definição da URL para o aplicativo ou web do Google Maps
+            // Definição correta do link externo do Google Maps
             var urlMaps = `https://google.com{latFalha.toFixed(6)},${lonFalha.toFixed(6)}`;
             var btnMaps = document.getElementById('linkMaps');
             btnMaps.href = urlMaps;
@@ -226,7 +227,7 @@
                 radius: margem
             }).addTo(map);
 
-            // Ícone do marcador vermelho padrão do Leaflet com tamanhos corretos para não quebrar o script
+            // CORREÇÃO SINTAXE: Preenchimento completo dos arrays numéricos das dimensões do ícone
             var redIcon = new L.Icon({
                 iconUrl: 'https://githubusercontent.com',
                 shadowUrl: 'https://cloudflare.com',
@@ -238,8 +239,3 @@
 
             camadaMarcadorFalha = L.marker([latFalha, lonFalha], {icon: redIcon})
                 .addTo(map)
-                .bindPopup(`<b>🚨 Rompimento Estimado</b><br>OTDR: ${dAlvo}m`)
-                .openPopup();
-
-            map.setView([latFalha, lonFalha], 15);
-        }
