@@ -206,9 +206,9 @@
         var marcadoresCaixasFixas = [];
         var camadaCirculoFalha = null;
         var camadaMarcadorFalha = null;
-        var historicoRede = []; // Array global ativo que alimentará o cálculo
+        var historicoRede = []; // Array de dados ativo
 
-        // INICIALIZAÇÃO DO MAPA
+        // INICIALIZAÇÃO DO MAPA COM SINTAXE PROTEGIDA
         map = L.map('map').setView([-21.767498, -41.323909], 12);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -218,3 +218,4 @@
 
         // FUNÇÃO QUE CARREGA E REDESENHA A ROTA SELECIONADA
         function carregarRotaSelecionada() {
+
