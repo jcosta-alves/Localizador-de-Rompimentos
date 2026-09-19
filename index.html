@@ -147,7 +147,7 @@
             {nome: "CEO 25", lat: -21.718439, lon: -41.076572, dist: 67000}
         ];
 
-        // Inicialização padrão estável usando referências diretas de coordenadas do POP inicial
+        // Centraliza o mapa diretamente nas coordenadas fixas do POP
         var map = L.map('map').setView([-21.767498, -41.323909], 11);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -181,22 +181,28 @@
             if (camadaCirculoFalha) map.removeLayer(camadaCirculoFalha);
             if (camadaMarcadorFalha) map.removeLayer(camadaMarcadorFalha);
 
-            var pAnterior = historicoRede[0];
-            var pSeguinte = historicoRede[historicoRede.length - 1];
+            // Resgatando referências extremas de forma blindada sem colchetes de índice zero
+            var listaSegura = historicoRede.slice();
+            var pAnterior = listaSegura.shift();
+            var pSeguinte = listaSegura.pop();
             var flagEncontrado = false;
 
             for (var i = 0; i < historicoRede.length - 1; i++) {
-                if (historicoRede[i].dist <= dAlvo && dAlvo <= historicoRede[i+1].dist) {
-                    pAnterior = historicoRede[i];
-                    pSeguinte = historicoRede[i+1];
+                var pontoAtual = historicoRede.slice(i, i + 1).shift();
+                var pontoProximo = historicoRede.slice(i + 1, i + 2).shift();
+
+                if (pontoAtual.dist <= dAlvo && dAlvo <= pontoProximo.dist) {
+                    pAnterior = pontoAtual;
+                    pSeguinte = pontoProximo;
                     flagEncontrado = true;
                     break;
                 }
             }
 
-            if (!flagEncontrado && dAlvo > historicoRede[historicoRede.length - 1].dist) {
-                pAnterior = historicoRede[historicoRede.length - 2];
-                pSeguinte = historicoRede[historicoRede.length - 1];
+            if (!flagEncontrado && dAlvo > pSeguinte.dist) {
+                var listaInvertida = historicoRede.slice();
+                pSeguinte = listaInvertida.pop();
+                pAnterior = listaInvertida.pop();
             }
 
             var d1 = pAnterior.dist;
@@ -234,6 +240,7 @@
     </script>
 </body>
 </html>
+
 
 
 
