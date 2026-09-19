@@ -147,7 +147,7 @@
             {nome: "CEO 25", lat: -21.718439, lon: -41.076572, dist: 67000}
         ];
 
-        // Centralização inicial corrigida apontando para as coordenadas do primeiro item (POP)
+        // Centraliza o mapa nas coordenadas iniciais da rede (POP)
         var map = L.map('map').setView([historicoRede[0].lat, historicoRede[0].lon], 11);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -155,11 +155,11 @@
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
-        // Rota óptica azul
+        // Cria a linha azul que une as CEOs
         var rotaCoords = historicoRede.map(p => [p.lat, p.lon]);
         L.polyline(rotaCoords, {color: '#007bff', weight: 5, opacity: 0.75}).addTo(map);
 
-        // Adiciona marcadores para cada uma das caixas fixas
+        // Adiciona os pins fixos azuis de todas as caixas
         historicoRede.forEach(ponto => {
             L.marker([ponto.lat, ponto.lon])
                 .addTo(map)
@@ -211,7 +211,7 @@
             document.getElementById('infoTrecho').innerHTML = `<b>Vão:</b> Entre ${pAnterior.nome} e ${pSeguinte.nome}<br><b>Distância da ${pAnterior.nome}:</b> ${distDaCaixa}m adiante`;
             document.getElementById('infoCoords').innerHTML = `${latFalha.toFixed(6)}, ${lonFalha.toFixed(6)}`;
             
-            // Link de redirecionamento formatado segundo os parâmetros oficiais do Maps API
+            // Monta o link externo sem quebrar
             var urlMaps = `https://google.com{latFalha.toFixed(6)},${lonFalha.toFixed(6)}`;
             var btnMaps = document.getElementById('linkMaps');
             btnMaps.href = urlMaps;
@@ -219,6 +219,7 @@
             
             document.getElementById('resultado').style.display = 'block';
 
+            // Cria o círculo vermelho de margem de erro
             camadaCirculoFalha = L.circle([latFalha, lonFalha], {
                 color: 'red',
                 fillColor: '#f03',
@@ -226,18 +227,23 @@
                 radius: margem
             }).addTo(map);
 
-            // Definição correta do ícone com tamanhos explícitos válidos
-            var redIcon = new L.Icon({
-                iconUrl: 'https://githubusercontent.com',
-                shadowUrl: 'https://cloudflare.com',
-                iconSize:,
-                iconAnchor:,
-                popupAnchor: [1, -34],
-                shadowSize: [41, 41]
-            });
-
-            camadaMarcadorFalha = L.marker([latFalha, lonFalha], {icon: redIcon})
+            // Adiciona o marcador padrão do Leaflet para o ponto de falha (evita erros de ícone quebrado)
+            camadaMarcadorFalha = L.marker([latFalha, lonFalha])
                 .addTo(map)
                 .bindPopup(`<b>🚨 Rompimento Estimado</b><br>OTDR: ${dAlvo}m`)
                 .openPopup();
+
+            map.setView([latFalha, lonFalha], 15);
+        }
+
+        // Impede que o clique no painel interaja com o mapa de fundo no celular
+        var painel = document.querySelector('.painel-controle');
+        if (painel) {
+            L.DomEvent.disableClickPropagation(painel);
+            L.DomEvent.disableScrollPropagation(painel);
+        }
+    </script>
+</body>
+</html>
+
 
