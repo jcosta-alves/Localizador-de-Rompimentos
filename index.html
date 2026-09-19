@@ -181,7 +181,6 @@
             if (camadaCirculoFalha) map.removeLayer(camadaCirculoFalha);
             if (camadaMarcadorFalha) map.removeLayer(camadaMarcadorFalha);
 
-            // CORREÇÃO: pAnterior precisa iniciar explicitamente no primeiro item da rede
             var pAnterior = historicoRede[0];
             var pSeguinte = historicoRede[historicoRede.length - 1];
             var flagEncontrado = false;
@@ -212,7 +211,12 @@
             document.getElementById('infoTrecho').innerHTML = `<b>Vão:</b> Entre ${pAnterior.nome} e ${pSeguinte.nome}<br><b>Distância da ${pAnterior.nome}:</b> ${distDaCaixa}m adiante`;
             document.getElementById('infoCoords').innerHTML = `${latFalha.toFixed(6)}, ${lonFalha.toFixed(6)}`;
             
-            document.getElementById('linkMaps').href = `https://google.com{latFalha.toFixed(6)},${lonFalha.toFixed(6)}`;
+            // CORREÇÃO 1: Definimos a URL e adicionamos uma ação direta de clique (onclick) forçada que funciona em qualquer celular
+            var urlMaps = `https://google.com{latFalha.toFixed(6)},${lonFalha.toFixed(6)}`;
+            var btnMaps = document.getElementById('linkMaps');
+            btnMaps.href = urlMaps;
+            btnMaps.setAttribute('onclick', `window.open('${urlMaps}', '_blank'); return false;`);
+            
             document.getElementById('resultado').style.display = 'block';
 
             camadaCirculoFalha = L.circle([latFalha, lonFalha], {
@@ -225,8 +229,8 @@
             var redIcon = new L.Icon({
                 iconUrl: 'https://githubusercontent.com',
                 shadowUrl: 'https://cloudflare.com',
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
+                iconSize:,
+                iconAnchor:,
                 popupAnchor: [1, -34],
                 shadowSize: [41, 41]
             });
@@ -238,6 +242,8 @@
 
             map.setView([latFalha, lonFalha], 15);
         }
-    </script>
-</body>
-</html>
+
+        // CORREÇÃO 2: Bloqueia o mapa de roubar o clique quando você toca nos botões do painel branco
+        var painel = document.querySelector('.painel-controle');
+        L.DomEvent.disableClickPropagation(painel);
+        L.DomEvent.disableScrollPropagation(painel);
