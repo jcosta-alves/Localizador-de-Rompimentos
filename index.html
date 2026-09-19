@@ -181,6 +181,7 @@
             if (camadaCirculoFalha) map.removeLayer(camadaCirculoFalha);
             if (camadaMarcadorFalha) map.removeLayer(camadaMarcadorFalha);
 
+            // CORREÇÃO: pAnterior precisa iniciar explicitamente no primeiro item da rede
             var pAnterior = historicoRede[0];
             var pSeguinte = historicoRede[historicoRede.length - 1];
             var flagEncontrado = false;
@@ -211,7 +212,7 @@
             document.getElementById('infoTrecho').innerHTML = `<b>Vão:</b> Entre ${pAnterior.nome} e ${pSeguinte.nome}<br><b>Distância da ${pAnterior.nome}:</b> ${distDaCaixa}m adiante`;
             document.getElementById('infoCoords').innerHTML = `${latFalha.toFixed(6)}, ${lonFalha.toFixed(6)}`;
             
-            // CORREÇÃO 1: Definimos a URL e adicionamos uma ação direta de clique (onclick) forçada que funciona em qualquer celular
+            // CORREÇÃO DA URL: API oficial do Google Maps gerada dinamicamente via interpolação do JavaScript
             var urlMaps = `https://google.com{latFalha.toFixed(6)},${lonFalha.toFixed(6)}`;
             var btnMaps = document.getElementById('linkMaps');
             btnMaps.href = urlMaps;
@@ -226,6 +227,7 @@
                 radius: margem
             }).addTo(map);
 
+            // Marcador de aviso vermelho customizado para destacar a falha das outras CEOs
             var redIcon = new L.Icon({
                 iconUrl: 'https://githubusercontent.com',
                 shadowUrl: 'https://cloudflare.com',
@@ -237,13 +239,4 @@
 
             camadaMarcadorFalha = L.marker([latFalha, lonFalha], {icon: redIcon})
                 .addTo(map)
-                .bindPopup(`<b>🚨 Rompimento Estimado</b><br>OTDR: ${dAlvo}m`)
-                .openPopup();
 
-            map.setView([latFalha, lonFalha], 15);
-        }
-
-        // CORREÇÃO 2: Bloqueia o mapa de roubar o clique quando você toca nos botões do painel branco
-        var painel = document.querySelector('.painel-controle');
-        L.DomEvent.disableClickPropagation(painel);
-        L.DomEvent.disableScrollPropagation(painel);
