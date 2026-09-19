@@ -147,8 +147,8 @@
             {nome: "CEO 25", lat: -21.718439, lon: -41.076572, dist: 67000}
         ];
 
-        // Inicialização padrão estável focada no POP
-        var map = L.map('map').setView([historicoRede[0].lat, historicoRede[0].lon], 11);
+        // Inicialização padrão estável usando referências diretas de coordenadas do POP inicial
+        var map = L.map('map').setView([-21.767498, -41.323909], 11);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
@@ -156,11 +156,11 @@
         }).addTo(map);
 
         // Desenha a rota óptica (Linha Azul)
-        var rotaCoords = historicoRede.map(p => [p.lat, p.lon]);
+        var rotaCoords = historicoRede.map(function(p) { return [p.lat, p.lon]; });
         L.polyline(rotaCoords, {color: '#007bff', weight: 5, opacity: 0.75}).addTo(map);
 
         // Plota todas as caixas fixas no mapa
-        historicoRede.forEach(ponto => {
+        historicoRede.forEach(function(ponto) {
             L.marker([ponto.lat, ponto.lon])
                 .addTo(map)
                 .bindPopup(`<b>${ponto.nome}</b><br>Distância: ${ponto.dist}m`);
