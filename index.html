@@ -191,7 +191,6 @@
             ]
         };
 
-        // Centraliza o mapa diretamente nas coordenadas fixas do POP
         var map = L.map('map').setView([-21.767498, -41.323909], 11);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -206,7 +205,6 @@
 
         var selectElement = document.getElementById('rotaSelect');
 
-        // Renderiza a rota e os marcadores dinamicamente baseado no seletor
         function carregarRotaNoMapa() {
             var nomeRota = selectElement.value;
             var historicoRede = bancoDeRotas[nomeRota];
@@ -220,8 +218,8 @@
             if (!historicoRede || historicoRede.length === 0) return;
 
             var rotaCoords = historicoRede.map(function(p) { return [p.lat, p.lon]; });
+            camadaPolilinha = L.polyline(rotaCoords, {color: '#007bff', weight: 5, opacity: 0.75}).addTo(map);
 
-
-
+            map.fitBounds(camadaPolilinha.getBounds());
 
 
