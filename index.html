@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculador Dinâmico de Rompimento de Fibra</title>
     
-    <!-- Leaflet CSS -->
+    <!-- Leaflet CSS - CORRIGIDO -->
     <link rel="stylesheet" href="https://unpkg.com" />
     
     <style>
@@ -106,19 +106,18 @@
 
         <div id="resultado" class="resultado-alerta">
             <strong>🚨 Falha Detectada!</strong>
-            <p id="infoTrecho" style="margin: 5px 0; font-size: 13px; font-weight: bold; color: #721c24;"></p>
-            <p id="infoMetro" style="margin: 5px 0; font-size: 13px; color: #721c24;"></p>
-            <p id="infoCoords" style="margin: 5px 0; font-size: 13px; font-family: monospace; color: #721c24;"></p>
+            <p id="infoTrecho" style="margin: 5px 0; font-size: 13px;"></p>
+            <p id="infoCoords" style="margin: 5px 0; font-size: 13px; font-family: monospace;"></p>
             <a id="linkMaps" href="#" target="_blank" class="btn-maps">Abrir no Google Maps</a>
         </div>
     </div>
 
     <div id="map"></div>
 
-    <!-- Leaflet JS -->
+    <!-- Leaflet JS - CORRIGIDO -->
     <script src="https://unpkg.com"></script>
     <script>
-        // TABELA COMPLETA COM 25 CEOS
+        // TABELA ORIGINAL COM 25 CEOS
         var historicoRede = [
             {nome: "POP", lat: -21.767498, lon: -41.323909, dist: 0},
             {nome: "CEO 1", lat: -21.768364, lon: -41.319208, dist: 563},
@@ -148,19 +147,19 @@
             {nome: "CEO 25", lat: -21.718439, lon: -41.076572, dist: 67000}
         ];
 
-        // CORRIGIDO: Centraliza o mapa puxando as coordenadas da primeira caixa da lista [0]
-        var map = L.map('map').setView([historicoRede[0].lat, historicoRede[0].lon], 11);
+        // Centraliza o mapa diretamente nas coordenadas fixas do POP
+        var map = L.map('map').setView([-21.767498, -41.323909], 11);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
-        // Desenha a linha óptica (Linha Azul)
+        // Desenha a rota óptica (Linha Azul)
         var rotaCoords = historicoRede.map(function(p) { return [p.lat, p.lon]; });
         L.polyline(rotaCoords, {color: '#007bff', weight: 5, opacity: 0.75}).addTo(map);
 
-        // Adiciona as marcações das caixas fixas no mapa
+        // Plota todas as caixas fixas no mapa
         historicoRede.forEach(function(ponto) {
             L.marker([ponto.lat, ponto.lon])
                 .addTo(map)
@@ -182,22 +181,27 @@
             if (camadaCirculoFalha) map.removeLayer(camadaCirculoFalha);
             if (camadaMarcadorFalha) map.removeLayer(camadaMarcadorFalha);
 
-            var pAnterior = historicoRede[0];
-            var pSeguinte = historicoRede[historicoRede.length - 1];
+            var listaSegura = historicoRede.slice();
+            var pAnterior = listaSegura.shift();
+            var pSeguinte = listaSegura.pop();
             var flagEncontrado = false;
 
             for (var i = 0; i < historicoRede.length - 1; i++) {
-                if (historicoRede[i].dist <= dAlvo && dAlvo <= historicoRede[i+1].dist) {
-                    pAnterior = historicoRede[i];
-                    pSeguinte = historicoRede[i+1];
+                var pontoAtual = historicoRede.slice(i, i + 1).shift();
+                var pontoProximo = historicoRede.slice(i + 1, i + 2).shift();
+
+                if (pontoAtual.dist <= dAlvo && dAlvo <= pontoProximo.dist) {
+                    pAnterior = pontoAtual;
+                    pSeguinte = pontoProximo;
                     flagEncontrado = true;
                     break;
                 }
             }
 
-            if (!flagEncontrado && dAlvo > historicoRede[historicoRede.length - 1].dist) {
-                pAnterior = historicoRede[historicoRede.length - 2];
-                pSeguinte = historicoRede[historicoRede.length - 1];
+            if (!flagEncontrado && dAlvo > pSeguinte.dist) {
+                var listaInvertida = historicoRede.slice();
+                pSeguinte = listaInvertida.pop();
+                pAnterior = listaInvertida.pop();
             }
 
             var d1 = pAnterior.dist;
@@ -207,7 +211,18 @@
             var latFalha = pAnterior.lat + t * (pSeguinte.lat - pAnterior.lat);
             var lonFalha = pAnterior.lon + t * (pSeguinte.lon - pAnterior.lon);
 
-            // Adiciona a demarcação vermelha e o marcador
+            var distDaCaixa = Math.round(dAlvo - pAnterior.dist);
+
+            document.getElementById('infoTrecho').innerHTML = `<b>Vão:</b> Entre ${pAnterior.nome} e ${pSeguinte.nome}<br><b>Distância da ${pAnterior.nome}:</b> ${distDaCaixa}m adiante`;
+            document.getElementById('infoCoords').innerHTML = `${latFalha.toFixed(6)}, ${lonFalha.toFixed(6)}`;
+            
+            // CORRIGIDO: Link dinâmico para abrir a geolocalização exata no Google Maps
+            var urlMaps = `https://google.com{latFalha},${lonFalha}`;
+            var btnMaps = document.getElementById('linkMaps');
+            btnMaps.href = urlMaps;
+            
+            document.getElementById('resultado').style.display = 'block';
+
             camadaCirculoFalha = L.circle([latFalha, lonFalha], {
                 color: 'red',
                 fillColor: '#f03',
@@ -215,21 +230,15 @@
                 radius: margem
             }).addTo(map);
 
-            camadaMarcadorFalha = L.marker([latFalha, lonFalha]).addTo(map)
-                .bindPopup(`<b>Ponto Provável</b><br>Distância: ${dAlvo}m`).openPopup();
+            camadaMarcadorFalha = L.marker([latFalha, lonFalha])
+                .addTo(map)
+                .bindPopup(`<b>🚨 Rompimento Estimado</b><br>OTDR: ${dAlvo}m`)
+                .openPopup();
 
             map.setView([latFalha, lonFalha], 15);
-
-            // CORRIGIDO: Completa as linhas textuais que estavam cortadas no seu original
-            var distDaCaixa = Math.round(dAlvo - pAnterior.dist);
-
-            document.getElementById('infoTrecho').textContent = `Vão: Entre ${pAnterior.nome} e ${pSeguinte.nome}`;
-            document.getElementById('infoMetro').textContent = `Distância da ${pAnterior.nome}: ${distDaCaixa}m adiante`;
-            document.getElementById('infoCoords').textContent = `${latFalha.toFixed(6)}, ${lonFalha.toFixed(6)}`;
-            document.getElementById('linkMaps').href = `https://google.com{latFalha},${lonFalha}`;
-            document.getElementById('resultado').style.display = 'block';
         }
     </script>
 </body>
 </html>
+
 
