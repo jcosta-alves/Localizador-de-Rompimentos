@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -108,7 +107,7 @@
 <body>
 
     <div class="painel-controle">
-        <!-- LINK DE ACESSO SEGURO PARA O NOVO ANEL -->
+        <!-- Link de acesso para o novo anel -->
         <a href="aurora.html" class="btn-mudar-anel">Ir para o Anel 41518 ➡</a>
         
         <h3>⚡ Anel 20883</h3>
@@ -202,7 +201,7 @@
 
             for (var i = 0; i < historicoRede.length - 1; i++) {
                 var pontoAtual = historicoRede.slice(i, i + 1).shift();
-                var pontoProximo = historicoRede.slice(i + 1, i + 2).shift();
+                var pontoProximo = historicoRede.slice(i + 1, i + 2).shift(); // CORRIGIDO O PONTO AQUI
 
                 if (pontoAtual.dist <= dAlvo && dAlvo <= pontoProximo.dist) {
                     pAnterior = pontoAtual;
@@ -241,3 +240,16 @@
                 fillColor: '#f03',
                 fillOpacity: 0.3,
                 radius: margem
+            }).addTo(map);
+
+            camadaMarcadorFalha = L.marker([latFalha, lonFalha])
+                .addTo(map)
+                .bindPopup(`<b>🚨 Rompimento Estimado</b><br>OTDR: ${dAlvo}m`)
+                .openPopup();
+
+            map.setView([latFalha, lonFalha], 15);
+        }
+    </script>
+</body>
+</html>
+
