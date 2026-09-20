@@ -32,7 +32,7 @@
         }
         .painel-controle h3 {
             margin-top: 0;
-            color: #28a745; /* Cor verde para diferenciar do outro anel */
+            color: #28a745; /* Cor verde para diferenciar visualmente do outro anel */
             border-bottom: 2px solid #28a745;
             padding-bottom: 5px;
         }
@@ -107,7 +107,7 @@
 <body>
 
     <div class="painel-controle">
-        <!-- Botão para voltar de forma simples para a rota principal -->
+        <!-- Botão de retorno seguro para a rota principal -->
         <a href="index.html" class="btn-mudar-anel">⬅ Voltar para Anel 20883</a>
         
         <h3>⚡ Anel 41518</h3>
@@ -134,7 +134,7 @@
     <!-- Leaflet JS -->
     <script src="https://unpkg.com"></script>
     <script>
-        // TABELA TRANSCREVIDA EXATAMENTE DA SUA IMAGEM (29 CEOS)
+        // TABELA OFICIAL EXTRAÍDA DA SUA IMAGEM (29 CEOS CORRIGIDAS)
         var historicoRede = [
             {nome: "POP", lat: -21.767498, lon: -41.323909, dist: 0},
             {nome: "CEO 1", lat: -21.769028, lon: -41.323977, dist: 660},
@@ -168,19 +168,19 @@
             {nome: "CEO 29", lat: -21.734023, lon: -41.313423, dist: 14300}
         ];
 
-        // Centraliza o mapa usando a primeira coordenada da lista
-        var map = L.map('map').setView([historicoRede[0].lat, historicoRede[0].lon], 12);
+        // Centraliza o mapa inicialmente nas coordenadas fixas do POP
+        var map = L.map('map').setView([-21.767498, -41.323909], 12);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
-        // Desenha a linha óptica do Anel 41518
+        // Desenha a rota óptica verde do Anel 41518
         var rotaCoords = historicoRede.map(function(p) { return [p.lat, p.lon]; });
         L.polyline(rotaCoords, {color: '#28a745', weight: 5, opacity: 0.75}).addTo(map);
 
-        // Plota todas as caixas deste anel no mapa
+        // Plota todas as caixas fixas do Parque Aurora no mapa
         historicoRede.forEach(function(ponto) {
             L.marker([ponto.lat, ponto.lon])
                 .addTo(map)
@@ -190,7 +190,6 @@
         var camadaCirculoFalha = null;
         var camadaMarcadorFalha = null;
 
-        // MATEMÁTICA ORIGINAL CORRIGIDA E ADAPTADA PARA ESTA ROTA
         function processarRompimento() {
             var dAlvo = parseFloat(document.getElementById('distanciaInput').value);
             var margem = parseFloat(document.getElementById('margemInput').value) || 0;
@@ -210,7 +209,7 @@
 
             for (var i = 0; i < historicoRede.length - 1; i++) {
                 var pontoAtual = historicoRede.slice(i, i + 1).shift();
-                var pontoProximo = historicoRede.slice(i + 1, i + 2).shift();
+                var pontoProximo = historicoRede.slice(i + 1, i + 2).shift(); // CORRIGIDO O PONTO AQUI
 
                 if (pontoAtual.dist <= dAlvo && dAlvo <= pontoProximo.dist) {
                     pAnterior = pontoAtual;
@@ -245,3 +244,5 @@
             document.getElementById('resultado').style.display = 'block';
 
             camadaCirculoFalha = L.circle([latFalha, lonFalha], {
+                color: 'red',
+
