@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -5,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculador Dinâmico de Rompimento de Fibra</title>
     
-    <!-- Leaflet CSS - CORRIGIDO -->
+    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com" />
     
     <style>
@@ -32,7 +33,7 @@
         }
         .painel-controle h3 {
             margin-top: 0;
-            color: #333;
+            color: #007bff;
             border-bottom: 2px solid #007bff;
             padding-bottom: 5px;
         }
@@ -88,12 +89,29 @@
         .btn-maps:hover {
             background: #357ae8;
         }
+        .btn-mudar-anel {
+            display: inline-block;
+            background: #6c757d;
+            color: white;
+            padding: 4px 8px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .btn-mudar-anel:hover {
+            background: #5a6268;
+        }
     </style>
 </head>
 <body>
 
     <div class="painel-controle">
-        <h3>⚡ Localizador OTDR</h3>
+        <!-- LINK DE ACESSO SEGURO PARA O NOVO ANEL -->
+        <a href="aurora.html" class="btn-mudar-anel">Ir para o Anel 41518 ➡</a>
+        
+        <h3>⚡ Anel 20883</h3>
         <div class="form-group">
             <label for="distanciaInput">Distância do Rompimento (metros):</label>
             <input type="number" id="distanciaInput" placeholder="Ex: 3600" value="3600">
@@ -114,10 +132,9 @@
 
     <div id="map"></div>
 
-    <!-- Leaflet JS - CORRIGIDO -->
+    <!-- Leaflet JS -->
     <script src="https://unpkg.com"></script>
     <script>
-        // TABELA ORIGINAL COM 25 CEOS
         var historicoRede = [
             {nome: "POP", lat: -21.767498, lon: -41.323909, dist: 0},
             {nome: "CEO 1", lat: -21.768364, lon: -41.319208, dist: 563},
@@ -147,7 +164,6 @@
             {nome: "CEO 25", lat: -21.718439, lon: -41.076572, dist: 67000}
         ];
 
-        // Centraliza o mapa diretamente nas coordenadas fixas do POP
         var map = L.map('map').setView([-21.767498, -41.323909], 11);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -155,11 +171,9 @@
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
-        // Desenha a rota óptica (Linha Azul)
         var rotaCoords = historicoRede.map(function(p) { return [p.lat, p.lon]; });
         L.polyline(rotaCoords, {color: '#007bff', weight: 5, opacity: 0.75}).addTo(map);
 
-        // Plota todas as caixas fixas no mapa
         historicoRede.forEach(function(ponto) {
             L.marker([ponto.lat, ponto.lon])
                 .addTo(map)
@@ -216,7 +230,6 @@
             document.getElementById('infoTrecho').innerHTML = `<b>Vão:</b> Entre ${pAnterior.nome} e ${pSeguinte.nome}<br><b>Distância da ${pAnterior.nome}:</b> ${distDaCaixa}m adiante`;
             document.getElementById('infoCoords').innerHTML = `${latFalha.toFixed(6)}, ${lonFalha.toFixed(6)}`;
             
-            // CORRIGIDO: Link dinâmico para abrir a geolocalização exata no Google Maps
             var urlMaps = `https://google.com{latFalha},${lonFalha}`;
             var btnMaps = document.getElementById('linkMaps');
             btnMaps.href = urlMaps;
@@ -228,18 +241,3 @@
                 fillColor: '#f03',
                 fillOpacity: 0.3,
                 radius: margem
-            }).addTo(map);
-
-            camadaMarcadorFalha = L.marker([latFalha, lonFalha])
-                .addTo(map)
-                .bindPopup(`<b>🚨 Rompimento Estimado</b><br>OTDR: ${dAlvo}m`)
-                .openPopup();
-
-            map.setView([latFalha, lonFalha], 15);
-        }
-    </script>
-</body>
-</html>
-
-
-
