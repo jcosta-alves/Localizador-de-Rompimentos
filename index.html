@@ -95,7 +95,7 @@
     <div class="painel-controle">
         <h3>⚡ Localizador OTDR</h3>
         
-        <!-- Menu para escolher a rota de forma simples e segura -->
+        <!-- Menu Seletor de Anéis -->
         <div class="form-group">
             <label for="rotaSelect">Selecione a Rota/Anel:</label>
             <select id="rotaSelect" onchange="carregarRotaNoMapa()">
@@ -127,7 +127,7 @@
     <!-- Leaflet JS -->
     <script src="https://unpkg.com"></script>
     <script>
-        // BANCO DE DADOS COMPLETO E SEGURO COM AS DUAS ROTAS EMBUTIDAS
+        // BANCO DE DADOS INTEGRADO COM AMBAS AS ROTAS
         var bancoDeRotas = {
             "Anel 20883": [
                 {nome: "POP", lat: -21.767498, lon: -41.323909, dist: 0},
@@ -191,7 +191,7 @@
             ]
         };
 
-        // Centraliza o mapa inicialmente nas coordenadas fixas do POP
+        // Centraliza o mapa diretamente nas coordenadas fixas do POP
         var map = L.map('map').setView([-21.767498, -41.323909], 11);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -199,7 +199,6 @@
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
-        // Controladores das camadas para podermos limpar o mapa dinamicamente
         var camadaPolilinha = null;
         var grupoMarcadoresCeo = L.layerGroup().addTo(map);
         var camadaCirculoFalha = null;
@@ -207,17 +206,21 @@
 
         var selectElement = document.getElementById('rotaSelect');
 
-        // Função responsável por desenhar a rota e as caixas corretas na tela
+        // Renderiza a rota e os marcadores dinamicamente baseado no seletor
         function carregarRotaNoMapa() {
             var nomeRota = selectElement.value;
             var historicoRede = bancoDeRotas[nomeRota];
 
-            // Limpa elementos da rota anterior
             if (camadaPolilinha) map.removeLayer(camadaPolilinha);
             grupoMarcadoresCeo.clearLayers();
             if (camadaCirculoFalha) map.removeLayer(camadaCirculoFalha);
             if (camadaMarcadorFalha) map.removeLayer(camadaMarcadorFalha);
             document.getElementById('resultado').style.display = 'none';
+
+            if (!historicoRede || historicoRede.length === 0) return;
+
+            var rotaCoords = historicoRede.map(function(p) { return [p.lat, p.lon]; });
+
 
 
 
