@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculador Dinâmico - Anel 41518</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com" />
+    
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        .painel-controle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+            max-width: 320px;
+        }
+        .painel-controle h3 {
+            margin-top: 0;
+            color: #28a745; /* Cor verde para diferenciar do outro anel */
+            border-bottom: 2px solid #28a745;
+            padding-bottom: 5px;
+        }
+        .form-group {
+            margin-bottom: 12px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .btn-calcular {
+            width: 100%;
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-calcular:hover {
+            background: #218838;
+        }
+        .resultado-alerta {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            display: none;
+        }
+        .btn-maps {
+            display: block;
+            background: #4285F4;
+            color: white;
+            padding: 8px 12px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .btn-maps:hover {
+            background: #357ae8;
+        }
+        .btn-mudar-anel {
+            display: inline-block;
+            background: #6c757d;
+            color: white;
+            padding: 4px 8px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .btn-mudar-anel:hover {
+            background: #5a6268;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="painel-controle">
+        <!-- Botão para voltar de forma simples para a rota principal -->
+        <a href="index.html" class="btn-mudar-anel">⬅ Voltar para Anel 20883</a>
+        
+        <h3>⚡ Anel 41518</h3>
+        <div class="form-group">
+            <label for="distanciaInput">Distância do Rompimento (metros):</label>
+            <input type="number" id="distanciaInput" placeholder="Ex: 3600" value="3600">
+        </div>
+        <div class="form-group">
+            <label for="margemInput">Margem de Erro (metros):</label>
+            <input type="number" id="margemInput" value="20">
+        </div>
+        <button class="btn-calcular" onclick="processarRompimento()">Calcular Falha</button>
+
+        <div id="resultado" class="resultado-alerta">
+            <strong>🚨 Falha Detectada!</strong>
+            <p id="infoTrecho" style="margin: 5px 0; font-size: 13px;"></p>
+            <p id="infoCoords" style="margin: 5px 0; font-size: 13px; font-family: monospace;"></p>
+            <a id="linkMaps" href="#" target="_blank" class="btn-maps">Abrir no Google Maps</a>
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com"></script>
+    <script>
+        // TABELA TRANSCREVIDA EXATAMENTE DA SUA IMAGEM (29 CEOS)
+        var historicoRede = [
+            {nome: "POP", lat: -21.767498, lon: -41.323909, dist: 0},
+            {nome: "CEO 1", lat: -21.769028, lon: -41.323977, dist: 660},
+            {nome: "CEO 2", lat: -21.776473, lon: -41.325867, dist: 1120},
+            {nome: "CEO 3", lat: -21.776162, lon: -41.326740, dist: 1250},
+            {nome: "CEO 4", lat: -21.777291, lon: -41.326542, dist: 1500},
+            {nome: "CEO 5", lat: -21.777732, lon: -41.325374, dist: 1630},
+            {nome: "CEO 6", lat: -21.779084, lon: -41.324958, dist: 1850},
+            {nome: "CEO 7", lat: -21.779558, lon: -41.321585, dist: 2250},
+            {nome: "CEO 8", lat: -21.779429, lon: -41.320052, dist: 2500},
+            {nome: "CEO 9", lat: -21.775702, lon: -41.319993, dist: 2920},
+            {nome: "CEO 10", lat: -21.774055, lon: -41.318676, dist: 3280},
+            {nome: "CEO 11", lat: -21.774889, lon: -41.316584, dist: 3530},
+            {nome: "CEO 12", lat: -21.770974, lon: -41.313968, dist: 4100},
+            {nome: "CEO 13", lat: -21.768123, lon: -41.312032, dist: 4500},
+            {nome: "CEO 14", lat: -21.763767, lon: -41.309122, dist: 5250},
+            {nome: "CEO 15", lat: -21.761542, lon: -41.307630, dist: 6000},
+            {nome: "CEO 16", lat: -21.759771, lon: -41.311625, dist: 6600},
+            {nome: "CEO 17", lat: -21.759442, lon: -41.313360, dist: 6800},
+            {nome: "CEO 18", lat: -21.758956, lon: -41.315974, dist: 7100},
+            {nome: "CEO 19", lat: -21.757706, lon: -41.319396, dist: 7660},
+            {nome: "CEO 20", lat: -21.756319, lon: -41.322746, dist: 8300},
+            {nome: "CEO 21", lat: -21.757081, lon: -41.325657, dist: 9100},
+            {nome: "CEO 22", lat: -21.758214, lon: -41.326514, dist: 9300},
+            {nome: "CEO 23", lat: -21.755263, lon: -41.326446, dist: 9800},
+            {nome: "CEO 24", lat: -21.753914, lon: -41.325231, dist: 10350},
+            {nome: "CEO 25", lat: -21.751756, lon: -41.323133, dist: 10800},
+            {nome: "CEO 26", lat: -21.752247, lon: -41.319882, dist: 11150},
+            {nome: "CEO 27", lat: -21.750077, lon: -41.310823, dist: 12200},
+            {nome: "CEO 28", lat: -21.744157, lon: -41.313554, dist: 13000},
+            {nome: "CEO 29", lat: -21.734023, lon: -41.313423, dist: 14300}
+        ];
+
+        // Centraliza o mapa usando a primeira coordenada da lista
+        var map = L.map('map').setView([historicoRede[0].lat, historicoRede[0].lon], 12);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // Desenha a linha óptica do Anel 41518
+        var rotaCoords = historicoRede.map(function(p) { return [p.lat, p.lon]; });
+        L.polyline(rotaCoords, {color: '#28a745', weight: 5, opacity: 0.75}).addTo(map);
+
+        // Plota todas as caixas deste anel no mapa
+        historicoRede.forEach(function(ponto) {
+            L.marker([ponto.lat, ponto.lon])
+                .addTo(map)
+                .bindPopup(`<b>${ponto.nome}</b><br>Distância: ${ponto.dist}m`);
+        });
+
+        var camadaCirculoFalha = null;
+        var camadaMarcadorFalha = null;
+
+        // MATEMÁTICA ORIGINAL CORRIGIDA E ADAPTADA PARA ESTA ROTA
+        function processarRompimento() {
+            var dAlvo = parseFloat(document.getElementById('distanciaInput').value);
+            var margem = parseFloat(document.getElementById('margemInput').value) || 0;
+            
+            if (isNaN(dAlvo) || dAlvo < 0) {
+                alert("Por favor, digite uma metragem válida.");
+                return;
+            }
+
+            if (camadaCirculoFalha) map.removeLayer(camadaCirculoFalha);
+            if (camadaMarcadorFalha) map.removeLayer(camadaMarcadorFalha);
+
+            var listaSegura = historicoRede.slice();
+            var pAnterior = listaSegura.shift();
+            var pSeguinte = listaSegura.pop();
+            var flagEncontrado = false;
+
+            for (var i = 0; i < historicoRede.length - 1; i++) {
+                var pontoAtual = historicoRede.slice(i, i + 1).shift();
+                var pontoProximo = historicoRede.slice(i + 1, i + 2).shift();
+
+                if (pontoAtual.dist <= dAlvo && dAlvo <= pontoProximo.dist) {
+                    pAnterior = pontoAtual;
+                    pSeguinte = pontoProximo;
+                    flagEncontrado = true;
+                    break;
+                }
+            }
+
+            if (!flagEncontrado && dAlvo > pSeguinte.dist) {
+                var listaInvertida = historicoRede.slice();
+                pSeguinte = listaInvertida.pop();
+                pAnterior = listaInvertida.pop();
+            }
+
+            var d1 = pAnterior.dist;
+            var d2 = pSeguinte.dist;
+            var t = (d2 === d1) ? 0 : (dAlvo - d1) / (d2 - d1);
+
+            var latFalha = pAnterior.lat + t * (pSeguinte.lat - pAnterior.lat);
+            var lonFalha = pAnterior.lon + t * (pSeguinte.lon - pAnterior.lon);
+
+            var distDaCaixa = Math.round(dAlvo - pAnterior.dist);
+
+            document.getElementById('infoTrecho').innerHTML = `<b>Vão:</b> Entre ${pAnterior.nome} e ${pSeguinte.nome}<br><b>Distância da ${pAnterior.nome}:</b> ${distDaCaixa}m adiante`;
+            document.getElementById('infoCoords').innerHTML = `${latFalha.toFixed(6)}, ${lonFalha.toFixed(6)}`;
+            
+            var urlMaps = `https://google.com{latFalha},${lonFalha}`;
+            var btnMaps = document.getElementById('linkMaps');
+            btnMaps.href = urlMaps;
+            
+            document.getElementById('resultado').style.display = 'block';
+
+            camadaCirculoFalha = L.circle([latFalha, lonFalha], {
